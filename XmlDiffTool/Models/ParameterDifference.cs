@@ -1,3 +1,5 @@
+using System;
+
 namespace XmlDiffTool.Models
 {
     public class ParameterDifference
@@ -18,5 +20,9 @@ namespace XmlDiffTool.Models
         public bool IsLeftMissing => string.IsNullOrWhiteSpace(LeftValue);
 
         public bool IsRightMissing => string.IsNullOrWhiteSpace(RightValue);
+
+        public bool HasMissingValue => IsLeftMissing || IsRightMissing;
+
+        public bool HasDifferentValue => !string.Equals(LeftValue, RightValue, StringComparison.Ordinal);
     }
 }

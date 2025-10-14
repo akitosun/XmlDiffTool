@@ -5,24 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="XML Diff Tool" Height="600" Width="900">
-    <Window.Resources>
-        <Style x:Key="MissingLeftCellStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="Black" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsLeftMissing}" Value="True">
-                    <Setter Property="Foreground" Value="Red" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="MissingRightCellStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="Black" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsRightMissing}" Value="True">
-                    <Setter Property="Foreground" Value="Red" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </Window.Resources>
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -56,6 +38,10 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Center">
             <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,6,0" />
             <TextBox Width="240" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+            <CheckBox Content="Only Show Different Parameter"
+                      Margin="12,0,0,0"
+                      VerticalAlignment="Center"
+                      IsChecked="{Binding OnlyShowDifferentParameters}" />
         </StackPanel>
 
         <DataGrid Grid.Row="2"
@@ -63,10 +49,22 @@
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   Margin="0,0,0,10">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Foreground" Value="Black" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasMissingValue}" Value="True">
+                            <Setter Property="Background" Value="Red" />
+                            <Setter Property="Foreground" Value="White" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*" />
-                <DataGridTextColumn Header="Left XML Value" Binding="{Binding LeftValue}" Width="*" ElementStyle="{StaticResource MissingLeftCellStyle}" />
-                <DataGridTextColumn Header="Right XML Value" Binding="{Binding RightValue}" Width="*" ElementStyle="{StaticResource MissingRightCellStyle}" />
+                <DataGridTextColumn Header="Left XML Value" Binding="{Binding LeftValue}" Width="*" />
+                <DataGridTextColumn Header="Right XML Value" Binding="{Binding RightValue}" Width="*" />
             </DataGrid.Columns>
         </DataGrid>
 

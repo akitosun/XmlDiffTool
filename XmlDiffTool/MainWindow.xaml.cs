@@ -24,6 +24,7 @@ namespace XmlDiffTool
         private string? _leftFilePath;
         private string? _rightFilePath;
         private string _filterText = string.Empty;
+        private bool _onlyShowDifferentParameters;
 
         public MainWindow()
         {
@@ -93,6 +94,20 @@ namespace XmlDiffTool
             }
         }
 
+        public bool OnlyShowDifferentParameters
+        {
+            get => _onlyShowDifferentParameters;
+            set
+            {
+                if (_onlyShowDifferentParameters != value)
+                {
+                    _onlyShowDifferentParameters = value;
+                    OnPropertyChanged(nameof(OnlyShowDifferentParameters));
+                    _differencesView.Refresh();
+                }
+            }
+        }
+
         private void BrowseForFile(Action<string> onFileSelected)
         {
             var dialog = new OpenFileDialog
@@ -137,12 +152,17 @@ namespace XmlDiffTool
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(_filterText))
+            if (_onlyShowDifferentParameters && !difference.HasDifferentValue)
             {
-                return true;
+                return false;
             }
 
-            return difference.Name.Contains(_filterText, StringComparison.OrdinalIgnoreCase);
+            if (!string.IsNullOrWhiteSpace(_filterText))
+            {
+                return difference.Name.Contains(_filterText, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return true;
         }
 
         private void ExportResults()
