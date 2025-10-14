@@ -1,15 +1,19 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.Win32;
+using Notifications.Wpf;
+using Notifications.Wpf.Core;
 using XmlDiffTool.Infrastructure;
 using XmlDiffTool.Models;
 using XmlDiffTool.Services;
@@ -21,10 +25,13 @@ namespace XmlDiffTool
         private readonly XmlComparer _comparer = new();
         private readonly ObservableCollection<ParameterDifference> _differences = new();
         private readonly ICollectionView _differencesView;
+        private readonly NotificationManager _notificationManager = new();
         private string? _leftFilePath;
         private string? _rightFilePath;
         private string _filterText = string.Empty;
         private bool _onlyShowDifferentParameters;
+        private bool _ignoreCaseValues;
+        private string _resultSummary = string.Empty;
 
         public MainWindow()
         {
@@ -37,7 +44,14 @@ namespace XmlDiffTool
             BrowseLeftCommand = new RelayCommand(_ => BrowseForFile(filePath => LeftFilePath = filePath));
             BrowseRightCommand = new RelayCommand(_ => BrowseForFile(filePath => RightFilePath = filePath));
             CompareCommand = new RelayCommand(_ => CompareFiles(), _ => CanCompareFiles());
-            ExportCommand = new RelayCommand(_ => ExportResults(), _ => _differences.Any());
+            ExportCommand = new RelayCommand(_ => ExportResults(), _ => _differencesView.Cast<ParameterDifference>().Any());
+
+            if (_differencesView is INotifyCollectionChanged notifyCollection)
+            {
+                notifyCollection.CollectionChanged += (_, _) => UpdateResultSummary();
+            }
+
+            UpdateResultSummary();
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -90,6 +104,7 @@ namespace XmlDiffTool
                     _filterText = value;
                     OnPropertyChanged(nameof(FilterText));
                     _differencesView.Refresh();
+                    UpdateResultSummary();
                 }
             }
         }
@@ -104,6 +119,35 @@ namespace XmlDiffTool
                     _onlyShowDifferentParameters = value;
                     OnPropertyChanged(nameof(OnlyShowDifferentParameters));
                     _differencesView.Refresh();
+                    UpdateResultSummary();
+                }
+            }
+        }
+
+        public bool IgnoreCaseValues
+        {
+            get => _ignoreCaseValues;
+            set
+            {
+                if (_ignoreCaseValues != value)
+                {
+                    _ignoreCaseValues = value;
+                    OnPropertyChanged(nameof(IgnoreCaseValues));
+                    _differencesView.Refresh();
+                    UpdateResultSummary();
+                }
+            }
+        }
+
+        public string ResultSummary
+        {
+            get => _resultSummary;
+            private set
+            {
+                if (_resultSummary != value)
+                {
+                    _resultSummary = value;
+                    OnPropertyChanged(nameof(ResultSummary));
                 }
             }
         }
@@ -137,6 +181,7 @@ namespace XmlDiffTool
                 }
 
                 _differencesView.Refresh();
+                UpdateResultSummary();
                 RaiseCommandStates();
             }
             catch (Exception ex)
@@ -152,7 +197,9 @@ namespace XmlDiffTool
                 return false;
             }
 
-            if (_onlyShowDifferentParameters && !difference.HasDifferentValue)
+            var hasDifferentValue = difference.HasDifferentValue(_ignoreCaseValues);
+
+            if (_onlyShowDifferentParameters && !hasDifferentValue)
             {
                 return false;
             }
@@ -177,6 +224,13 @@ namespace XmlDiffTool
             {
                 try
                 {
+                    var differencesToExport = _differencesView.Cast<ParameterDifference>().ToList();
+                    if (!differencesToExport.Any())
+                    {
+                        MessageBox.Show(this, "There are no results to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                        return;
+                    }
+
                     using var document = SpreadsheetDocument.Create(dialog.FileName, SpreadsheetDocumentType.Workbook);
                     var workbookPart = document.AddWorkbookPart();
                     workbookPart.Workbook = new Workbook();
@@ -196,7 +250,7 @@ namespace XmlDiffTool
                     var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>()!;
                     AppendRow(sheetData, "Name", "Left XML Value", "Right XML Value");
 
-                    foreach (var difference in _differences)
+                    foreach (var difference in differencesToExport)
                     {
                         AppendRow(sheetData, difference.Name, difference.LeftValue ?? string.Empty, difference.RightValue ?? string.Empty);
                     }
@@ -227,10 +281,51 @@ namespace XmlDiffTool
             sheetData.Append(row);
         }
 
+        private void UpdateResultSummary()
+        {
+            var visibleDifferences = _differencesView.Cast<ParameterDifference>().ToList();
+            var totalCount = visibleDifferences.Count;
+            var leftMissingCount = visibleDifferences.Count(d => d.IsLeftMissing);
+            var rightMissingCount = visibleDifferences.Count(d => d.IsRightMissing);
+
+            ResultSummary = $"Result: All {totalCount} parameters difference, and Left miss {leftMissingCount} parameters,Right miss {rightMissingCount} parameters.";
+
+            (ExportCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
         private void RaiseCommandStates()
         {
             (CompareCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (ExportCommand as RelayCommand)?.RaiseCanExecuteChanged();
+        }
+
+        private void DifferencesDataGrid_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is not DataGrid dataGrid)
+            {
+                return;
+            }
+
+            if (dataGrid.SelectedItem is not ParameterDifference difference || string.IsNullOrWhiteSpace(difference.Name))
+            {
+                return;
+            }
+
+            try
+            {
+                Clipboard.SetText(difference.Name);
+            }
+            catch
+            {
+                return;
+            }
+
+            _notificationManager.Show(new NotificationContent
+            {
+                Title = "Copied",
+                Message = $"{difference.Name} is copied.",
+                Type = NotificationType.Information
+            });
         }
 
         private void OnPropertyChanged(string propertyName)
