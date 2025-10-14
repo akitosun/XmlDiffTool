@@ -5,89 +5,134 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="XML Diff Tool" Height="600" Width="900">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
 
-        <Border Grid.Row="0" Padding="10" BorderThickness="1" BorderBrush="LightGray" CornerRadius="4">
-            <Grid>
+    <Grid>
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Padding="10" BorderThickness="1" BorderBrush="LightGray" CornerRadius="4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBox Width="280" Margin="0,0,8,0" Text="{Binding LeftFilePath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" />
+                        <Button Content="Browse..." Width="90" Command="{Binding BrowseLeftCommand}" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Content="Compare" Width="120" Margin="10,0" Command="{Binding CompareCommand}" />
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                        <TextBox Width="280" Margin="0,0,8,0" Text="{Binding RightFilePath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" />
+                        <Button Content="Browse..." Width="90" Command="{Binding BrowseRightCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Center">
+                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,6,0" />
+                <TextBox Width="240" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+                <CheckBox Content="Only Show Different Parameter"
+                          Margin="12,0,0,0"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding OnlyShowDifferentParameters}" />
+                <CheckBox Margin="12,0,0,0"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding IgnoreCaseValues}">
+                    <TextBlock Text="Ignore Value Case" VerticalAlignment="Center" />
+                </CheckBox>
+            </StackPanel>
+
+            <DataGrid x:Name="DifferencesDataGrid"
+                      Grid.Row="2"
+                      ItemsSource="{Binding DifferencesView}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      Margin="0,0,0,10"
+                      MouseLeftButtonUp="DifferencesDataGrid_MouseLeftButtonUp">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="Foreground" Value="Black" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasMissingValue}" Value="True">
+                                <Setter Property="Background" Value="Red" />
+                                <Setter Property="Foreground" Value="White" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*" />
+                    <DataGridTextColumn Header="Left XML Value" Binding="{Binding LeftValue}" Width="*" />
+                    <DataGridTextColumn Header="Right XML Value" Binding="{Binding RightValue}" Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                    <TextBox Width="280" Margin="0,0,8,0" Text="{Binding LeftFilePath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" />
-                    <Button Content="Browse..." Width="90" Command="{Binding BrowseLeftCommand}" />
-                </StackPanel>
-
-                <Button Grid.Column="1" Content="Compare" Width="120" Margin="10,0" Command="{Binding CompareCommand}" />
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                    <TextBox Width="280" Margin="0,0,8,0" Text="{Binding RightFilePath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" />
-                    <Button Content="Browse..." Width="90" Command="{Binding BrowseRightCommand}" />
-                </StackPanel>
+                <TextBlock Text="{Binding ResultSummary}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0" />
+                <Button Grid.Column="1"
+                        Content="Export"
+                        Width="120"
+                        HorizontalAlignment="Right"
+                        Command="{Binding ExportCommand}" />
             </Grid>
-        </Border>
-
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Center">
-            <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,6,0" />
-            <TextBox Width="240" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
-            <CheckBox Content="Only Show Different Parameter"
-                      Margin="12,0,0,0"
-                      VerticalAlignment="Center"
-                      IsChecked="{Binding OnlyShowDifferentParameters}" />
-            <CheckBox Margin="12,0,0,0"
-                      VerticalAlignment="Center"
-                      IsChecked="{Binding IgnoreCaseValues}">
-                <TextBlock Text="Ignore Value Case" VerticalAlignment="Center" />
-            </CheckBox>
-        </StackPanel>
-
-        <DataGrid x:Name="DifferencesDataGrid"
-                  Grid.Row="2"
-                  ItemsSource="{Binding DifferencesView}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  Margin="0,0,0,10"
-                  MouseLeftButtonUp="DifferencesDataGrid_MouseLeftButtonUp">
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="Background" Value="Transparent" />
-                    <Setter Property="Foreground" Value="Black" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasMissingValue}" Value="True">
-                            <Setter Property="Background" Value="Red" />
-                            <Setter Property="Foreground" Value="White" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.RowStyle>
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*" />
-                <DataGridTextColumn Header="Left XML Value" Binding="{Binding LeftValue}" Width="*" />
-                <DataGridTextColumn Header="Right XML Value" Binding="{Binding RightValue}" Width="*" />
-            </DataGrid.Columns>
-        </DataGrid>
-
-        <Grid Grid.Row="3">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding ResultSummary}"
-                       VerticalAlignment="Center"
-                       Margin="0,0,10,0" />
-            <Button Grid.Column="1"
-                    Content="Export"
-                    Width="120"
-                    HorizontalAlignment="Right"
-                    Command="{Binding ExportCommand}" />
         </Grid>
+
+        <Border Margin="10"
+                Background="#80FFFFFF"
+                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Panel.ZIndex="1">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="60" Height="60">
+                    <Grid.Triggers>
+                        <EventTrigger RoutedEvent="Grid.Loaded">
+                            <BeginStoryboard x:Name="SpinnerStoryboardAction">
+                                <Storyboard RepeatBehavior="Forever">
+                                    <DoubleAnimation Storyboard.TargetName="SpinnerArcRotate"
+                                                     Storyboard.TargetProperty="Angle"
+                                                     From="0" To="360"
+                                                     Duration="0:0:1" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                        <EventTrigger RoutedEvent="Grid.Unloaded">
+                            <StopStoryboard BeginStoryboardName="SpinnerStoryboardAction" />
+                        </EventTrigger>
+                    </Grid.Triggers>
+                    <Ellipse Width="48" Height="48" Stroke="LightGray" StrokeThickness="6" Opacity="0.3" />
+                    <Path Stroke="#FF0078D7" StrokeThickness="6" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
+                        <Path.Data>
+                            <PathGeometry>
+                                <PathFigure StartPoint="30,12" IsClosed="False">
+                                    <ArcSegment Point="30,48" Size="18,18" SweepDirection="Clockwise" IsLargeArc="False" />
+                                </PathFigure>
+                            </PathGeometry>
+                        </Path.Data>
+                        <Path.RenderTransform>
+                            <RotateTransform x:Name="SpinnerArcRotate" CenterX="24" CenterY="24" />
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+                <TextBlock Text="Comparing..." FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,16,0,0" />
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>
