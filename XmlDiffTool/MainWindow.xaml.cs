@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -31,6 +32,7 @@ namespace XmlDiffTool
         private bool _onlyShowDifferentParameters;
         private bool _ignoreCaseValues;
         private string _resultSummary = string.Empty;
+        private bool _isBusy;
 
         public MainWindow()
         {
@@ -42,8 +44,8 @@ namespace XmlDiffTool
 
             BrowseLeftCommand = new RelayCommand(_ => BrowseForFile(filePath => LeftFilePath = filePath));
             BrowseRightCommand = new RelayCommand(_ => BrowseForFile(filePath => RightFilePath = filePath));
-            CompareCommand = new RelayCommand(_ => CompareFiles(), _ => CanCompareFiles());
-            ExportCommand = new RelayCommand(_ => ExportResults(), _ => _differencesView.Cast<ParameterDifference>().Any());
+            CompareCommand = new RelayCommand(async _ => await CompareFilesAsync(), _ => CanCompareFiles());
+            ExportCommand = new RelayCommand(_ => ExportResults(), _ => !IsBusy && _differencesView.Cast<ParameterDifference>().Any());
 
             if (_differencesView is INotifyCollectionChanged notifyCollection)
             {
@@ -62,6 +64,20 @@ namespace XmlDiffTool
         public ICommand CompareCommand { get; }
 
         public ICommand ExportCommand { get; }
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            private set
+            {
+                if (_isBusy != value)
+                {
+                    _isBusy = value;
+                    OnPropertyChanged(nameof(IsBusy));
+                    RaiseCommandStates();
+                }
+            }
+        }
 
         public ICollectionView DifferencesView => _differencesView;
 
@@ -166,27 +182,44 @@ namespace XmlDiffTool
 
         private bool CanCompareFiles()
         {
-            return File.Exists(_leftFilePath) && File.Exists(_rightFilePath);
+            return !IsBusy && File.Exists(_leftFilePath) && File.Exists(_rightFilePath);
         }
 
-        private void CompareFiles()
+        private async Task CompareFilesAsync()
         {
             try
             {
-                _differences.Clear();
-                foreach (var difference in _comparer.Compare(_leftFilePath!, _rightFilePath!))
+                IsBusy = true;
+                ClearResults();
+
+                var leftPath = _leftFilePath!;
+                var rightPath = _rightFilePath!;
+
+                var differences = await Task.Run(() => _comparer.Compare(leftPath, rightPath).ToList());
+
+                foreach (var difference in differences)
                 {
                     _differences.Add(difference);
                 }
 
                 _differencesView.Refresh();
                 UpdateResultSummary();
-                RaiseCommandStates();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(this, $"Failed to compare XML files.\n{ex.Message}", "Comparison Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        private void ClearResults()
+        {
+            _differences.Clear();
+            _differencesView.Refresh();
+            ResultSummary = string.Empty;
         }
 
         private bool FilterDifferences(object obj)
