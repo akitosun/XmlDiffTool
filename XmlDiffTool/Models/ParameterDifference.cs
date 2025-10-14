@@ -1,14 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 
 namespace XmlDiffTool.Models
 {
     public class ParameterDifference : INotifyPropertyChanged
     {
         private readonly ObservableCollection<ParameterDifference> _children = new();
+        private readonly Dictionary<string, ParameterDifference> _childrenLookup = new();
         private readonly ReadOnlyObservableCollection<ParameterDifference> _readOnlyChildren;
         private string? _leftValue;
         private string? _rightValue;
@@ -35,7 +36,7 @@ namespace XmlDiffTool.Models
 
         public ReadOnlyObservableCollection<ParameterDifference> Children => _readOnlyChildren;
 
-        public bool HasChildren => _children.Any();
+        public bool HasChildren => _children.Count > 0;
 
         public int Level => Parent is null ? 0 : Parent.Level + 1;
 
@@ -120,14 +121,14 @@ namespace XmlDiffTool.Models
 
         internal ParameterDifference GetOrCreateChild(string fullPath, string displayName)
         {
-            var existing = _children.FirstOrDefault(child => child.DisplayName == displayName);
-            if (existing is not null)
+            if (_childrenLookup.TryGetValue(displayName, out var existing))
             {
                 return existing;
             }
 
             var child = new ParameterDifference(fullPath, displayName, this);
             _children.Add(child);
+            _childrenLookup[displayName] = child;
             return child;
         }
 

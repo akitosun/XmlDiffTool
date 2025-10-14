@@ -16,11 +16,13 @@ namespace XmlDiffTool.Services
             keys.UnionWith(rightParameters.Keys);
 
             var roots = new List<ParameterDifference>();
+            var rootLookup = new Dictionary<string, ParameterDifference>();
 
             foreach (var key in keys.OrderBy(k => k))
             {
                 AddDifferenceNode(
                     roots,
+                    rootLookup,
                     key,
                     leftParameters.TryGetValue(key, out var leftValue) ? leftValue : null,
                     rightParameters.TryGetValue(key, out var rightValue) ? rightValue : null);
@@ -69,25 +71,30 @@ namespace XmlDiffTool.Services
             }
         }
 
-        private static void AddDifferenceNode(ICollection<ParameterDifference> roots, string path, string? leftValue, string? rightValue)
+        private static void AddDifferenceNode(
+            ICollection<ParameterDifference> roots,
+            IDictionary<string, ParameterDifference> rootLookup,
+            string path,
+            string? leftValue,
+            string? rightValue)
         {
             var segments = path.Split('/');
             ParameterDifference? current = null;
 
             foreach (var segment in segments)
             {
-                var fullPath = current is null ? segment : $"{current.Name}/{segment}";
                 if (current is null)
                 {
-                    current = roots.FirstOrDefault(d => d.DisplayName == segment);
-                    if (current is null)
+                    if (!rootLookup.TryGetValue(segment, out current))
                     {
-                        current = new ParameterDifference(fullPath, segment, null);
+                        current = new ParameterDifference(segment, segment, null);
+                        rootLookup[segment] = current;
                         roots.Add(current);
                     }
                 }
                 else
                 {
+                    var fullPath = $"{current.Name}/{segment}";
                     current = current.GetOrCreateChild(fullPath, segment);
                 }
             }
