@@ -24,6 +24,7 @@ namespace XmlDiffTool
     {
         private readonly XmlComparer _comparer = new();
         private readonly ObservableCollection<ParameterDifference> _differences = new();
+        private readonly HashSet<string> _userCollapsedNodes = new();
         private readonly List<ParameterDifference> _differenceTree = new();
         private readonly ICollectionView _differencesView;
         private readonly NotificationManager _notificationManager = new();
@@ -212,6 +213,7 @@ namespace XmlDiffTool
         {
             _differences.Clear();
             _differenceTree.Clear();
+            _userCollapsedNodes.Clear();
             _differencesView.Refresh();
             ResultSummary = string.Empty;
         }
@@ -232,8 +234,22 @@ namespace XmlDiffTool
                 return;
             }
 
+            if (sender is not ParameterDifference difference)
+            {
+                return;
+            }
+
             if (e.PropertyName == nameof(ParameterDifference.IsExpanded))
             {
+                if (difference.IsExpanded)
+                {
+                    _userCollapsedNodes.Remove(difference.Name);
+                }
+                else
+                {
+                    _userCollapsedNodes.Add(difference.Name);
+                }
+
                 RefreshVisibleDifferences();
             }
         }
@@ -273,7 +289,7 @@ namespace XmlDiffTool
 
             node.IsVisible = isVisible;
 
-            if (isVisible && node.HasChildren && forceExpand)
+            if (isVisible && node.HasChildren && forceExpand && !_userCollapsedNodes.Contains(node.Name))
             {
                 node.IsExpanded = true;
             }
