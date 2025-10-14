@@ -506,6 +506,28 @@ namespace XmlDiffTool
             });
         }
 
+        private void ExpandCollapseCheckBox_OnChecked(object sender, RoutedEventArgs e)
+        {
+            if (sender is not CheckBox checkBox)
+            {
+                return;
+            }
+
+            if (checkBox.DataContext is not ParameterDifference difference)
+            {
+                return;
+            }
+
+            var isExpanded = checkBox.IsChecked == true;
+            if (difference.IsExpanded == isExpanded)
+            {
+                RefreshVisibleDifferences();
+                return;
+            }
+
+            difference.IsExpanded = isExpanded;
+        }
+
         private void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

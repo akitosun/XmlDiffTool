@@ -66,10 +66,12 @@
                     <DataGridTemplateColumn Width="Auto" Header="">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <CheckBox IsChecked="{Binding IsExpanded}"
+                                <CheckBox IsChecked="{Binding IsExpanded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           VerticalAlignment="Center"
                                           HorizontalAlignment="Center"
-                                          Visibility="{Binding HasChildren, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                          Visibility="{Binding HasChildren, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                          Checked="ExpandCollapseCheckBox_OnChecked"
+                                          Unchecked="ExpandCollapseCheckBox_OnChecked" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
