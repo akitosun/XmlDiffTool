@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -24,6 +24,7 @@ namespace XmlDiffTool
     {
         private readonly XmlComparer _comparer = new();
         private readonly ObservableCollection<ParameterDifference> _differences = new();
+        private readonly List<ParameterDifference> _differenceTree = new();
         private readonly ICollectionView _differencesView;
         private readonly NotificationManager _notificationManager = new();
         private string? _leftFilePath;
@@ -33,6 +34,7 @@ namespace XmlDiffTool
         private bool _ignoreCaseValues;
         private string _resultSummary = string.Empty;
         private bool _isBusy;
+        private bool _isApplyingFilters;
 
         public MainWindow()
         {
@@ -40,17 +42,11 @@ namespace XmlDiffTool
             DataContext = this;
 
             _differencesView = CollectionViewSource.GetDefaultView(_differences);
-            _differencesView.Filter = FilterDifferences;
 
             BrowseLeftCommand = new RelayCommand(_ => BrowseForFile(filePath => LeftFilePath = filePath));
             BrowseRightCommand = new RelayCommand(_ => BrowseForFile(filePath => RightFilePath = filePath));
             CompareCommand = new RelayCommand(async _ => await CompareFilesAsync(), _ => CanCompareFiles());
-            ExportCommand = new RelayCommand(_ => ExportResults(), _ => !IsBusy && _differencesView.Cast<ParameterDifference>().Any());
-
-            if (_differencesView is INotifyCollectionChanged notifyCollection)
-            {
-                notifyCollection.CollectionChanged += (_, _) => UpdateResultSummary();
-            }
+            ExportCommand = new RelayCommand(_ => ExportResults(), _ => !IsBusy && GetVisibleLeaves().Any());
 
             UpdateResultSummary();
         }
@@ -118,8 +114,7 @@ namespace XmlDiffTool
                 {
                     _filterText = value;
                     OnPropertyChanged(nameof(FilterText));
-                    _differencesView.Refresh();
-                    UpdateResultSummary();
+                    ApplyFilters(true);
                 }
             }
         }
@@ -133,8 +128,7 @@ namespace XmlDiffTool
                 {
                     _onlyShowDifferentParameters = value;
                     OnPropertyChanged(nameof(OnlyShowDifferentParameters));
-                    _differencesView.Refresh();
-                    UpdateResultSummary();
+                    ApplyFilters(true);
                 }
             }
         }
@@ -148,8 +142,7 @@ namespace XmlDiffTool
                 {
                     _ignoreCaseValues = value;
                     OnPropertyChanged(nameof(IgnoreCaseValues));
-                    _differencesView.Refresh();
-                    UpdateResultSummary();
+                    ApplyFilters(true);
                 }
             }
         }
@@ -195,15 +188,15 @@ namespace XmlDiffTool
                 var leftPath = _leftFilePath!;
                 var rightPath = _rightFilePath!;
 
-                var differences = await Task.Run(() => _comparer.Compare(leftPath, rightPath).ToList());
+                var differences = await Task.Run(() => _comparer.Compare(leftPath, rightPath));
 
                 foreach (var difference in differences)
                 {
-                    _differences.Add(difference);
+                    AttachDifferenceHandlers(difference);
+                    _differenceTree.Add(difference);
                 }
 
-                _differencesView.Refresh();
-                UpdateResultSummary();
+                ApplyFilters(true);
             }
             catch (Exception ex)
             {
@@ -218,30 +211,167 @@ namespace XmlDiffTool
         private void ClearResults()
         {
             _differences.Clear();
+            _differenceTree.Clear();
             _differencesView.Refresh();
             ResultSummary = string.Empty;
         }
 
-        private bool FilterDifferences(object obj)
+        private void AttachDifferenceHandlers(ParameterDifference difference)
         {
-            if (obj is not ParameterDifference difference)
+            difference.PropertyChanged += ParameterDifferenceOnPropertyChanged;
+            foreach (var child in difference.Children)
+            {
+                AttachDifferenceHandlers(child);
+            }
+        }
+
+        private void ParameterDifferenceOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (_isApplyingFilters)
+            {
+                return;
+            }
+
+            if (e.PropertyName == nameof(ParameterDifference.IsExpanded))
+            {
+                RefreshVisibleDifferences();
+            }
+        }
+
+        private void ApplyFilters(bool forceExpand)
+        {
+            _isApplyingFilters = true;
+            try
+            {
+                foreach (var root in _differenceTree)
+                {
+                    UpdateVisibility(root, forceExpand);
+                }
+            }
+            finally
+            {
+                _isApplyingFilters = false;
+            }
+
+            RefreshVisibleDifferences();
+        }
+
+        private bool UpdateVisibility(ParameterDifference node, bool forceExpand)
+        {
+            var childVisible = false;
+
+            foreach (var child in node.Children)
+            {
+                if (UpdateVisibility(child, forceExpand))
+                {
+                    childVisible = true;
+                }
+            }
+
+            var matchesSelf = MatchesNode(node);
+            var isVisible = matchesSelf || childVisible;
+
+            node.IsVisible = isVisible;
+
+            if (isVisible && node.HasChildren && forceExpand)
+            {
+                node.IsExpanded = true;
+            }
+
+            return isVisible;
+        }
+
+        private bool MatchesNode(ParameterDifference node)
+        {
+            if (!string.IsNullOrWhiteSpace(_filterText) &&
+                !node.Name.Contains(_filterText, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
 
-            var hasDifferentValue = difference.HasDifferentValue(_ignoreCaseValues);
-
-            if (_onlyShowDifferentParameters && !hasDifferentValue)
+            if (!node.HasChildren)
             {
-                return false;
+                if (_onlyShowDifferentParameters && !node.HasDifferentValue(_ignoreCaseValues))
+                {
+                    return false;
+                }
+
+                return true;
             }
 
-            if (!string.IsNullOrWhiteSpace(_filterText))
+            return !string.IsNullOrWhiteSpace(_filterText);
+        }
+
+        private void RefreshVisibleDifferences()
+        {
+            _differences.Clear();
+
+            foreach (var root in _differenceTree)
             {
-                return difference.Name.Contains(_filterText, StringComparison.OrdinalIgnoreCase);
+                foreach (var difference in FlattenVisible(root))
+                {
+                    _differences.Add(difference);
+                }
             }
 
-            return true;
+            _differencesView.Refresh();
+            UpdateResultSummary();
+        }
+
+        private IEnumerable<ParameterDifference> FlattenVisible(ParameterDifference node)
+        {
+            if (!node.IsVisible)
+            {
+                yield break;
+            }
+
+            yield return node;
+
+            if (!node.IsExpanded)
+            {
+                yield break;
+            }
+
+            foreach (var child in node.Children)
+            {
+                foreach (var descendant in FlattenVisible(child))
+                {
+                    yield return descendant;
+                }
+            }
+        }
+
+        private IEnumerable<ParameterDifference> GetVisibleLeaves()
+        {
+            foreach (var root in _differenceTree)
+            {
+                foreach (var difference in GetVisibleLeaves(root))
+                {
+                    yield return difference;
+                }
+            }
+        }
+
+        private IEnumerable<ParameterDifference> GetVisibleLeaves(ParameterDifference node)
+        {
+            if (!node.IsVisible)
+            {
+                yield break;
+            }
+
+            if (!node.HasChildren)
+            {
+                yield return node;
+                yield break;
+            }
+
+            foreach (var child in node.Children)
+            {
+                foreach (var difference in GetVisibleLeaves(child))
+                {
+                    yield return difference;
+                }
+            }
         }
 
         private void ExportResults()
@@ -256,7 +386,7 @@ namespace XmlDiffTool
             {
                 try
                 {
-                    var differencesToExport = _differencesView.Cast<ParameterDifference>().ToList();
+                    var differencesToExport = GetVisibleLeaves().ToList();
                     if (!differencesToExport.Any())
                     {
                         MessageBox.Show(this, "There are no results to export.", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -315,7 +445,7 @@ namespace XmlDiffTool
 
         private void UpdateResultSummary()
         {
-            var visibleDifferences = _differencesView.Cast<ParameterDifference>().ToList();
+            var visibleDifferences = GetVisibleLeaves().ToList();
             var totalCount = visibleDifferences.Count;
             var leftMissingCount = visibleDifferences.Count(d => d.IsLeftMissing);
             var rightMissingCount = visibleDifferences.Count(d => d.IsRightMissing);

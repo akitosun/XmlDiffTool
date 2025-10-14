@@ -15,13 +15,18 @@ namespace XmlDiffTool.Services
             var keys = new HashSet<string>(leftParameters.Keys);
             keys.UnionWith(rightParameters.Keys);
 
-            return keys
-                .OrderBy(k => k)
-                .Select(key => new ParameterDifference(
+            var roots = new List<ParameterDifference>();
+
+            foreach (var key in keys.OrderBy(k => k))
+            {
+                AddDifferenceNode(
+                    roots,
                     key,
                     leftParameters.TryGetValue(key, out var leftValue) ? leftValue : null,
-                    rightParameters.TryGetValue(key, out var rightValue) ? rightValue : null))
-                .ToList();
+                    rightParameters.TryGetValue(key, out var rightValue) ? rightValue : null);
+            }
+
+            return roots;
         }
 
         private static Dictionary<string, string> LoadParameters(string path)
@@ -40,7 +45,7 @@ namespace XmlDiffTool.Services
         {
             foreach (var attribute in element.Attributes())
             {
-                var attributePath = $"{currentPath}[@{attribute.Name.LocalName}]";
+                var attributePath = $"{currentPath}/@{attribute.Name.LocalName}";
                 values[attributePath] = attribute.Value;
             }
 
@@ -62,6 +67,32 @@ namespace XmlDiffTool.Services
                     TraverseElement(child, childPath, values);
                 }
             }
+        }
+
+        private static void AddDifferenceNode(ICollection<ParameterDifference> roots, string path, string? leftValue, string? rightValue)
+        {
+            var segments = path.Split('/');
+            ParameterDifference? current = null;
+
+            foreach (var segment in segments)
+            {
+                var fullPath = current is null ? segment : $"{current.Name}/{segment}";
+                if (current is null)
+                {
+                    current = roots.FirstOrDefault(d => d.DisplayName == segment);
+                    if (current is null)
+                    {
+                        current = new ParameterDifference(fullPath, segment, null);
+                        roots.Add(current);
+                    }
+                }
+                else
+                {
+                    current = current.GetOrCreateChild(fullPath, segment);
+                }
+            }
+
+            current?.SetValues(leftValue, rightValue);
         }
     }
 }
