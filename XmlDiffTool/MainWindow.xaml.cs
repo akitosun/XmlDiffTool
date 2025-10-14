@@ -13,7 +13,6 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.Win32;
 using Notifications.Wpf;
-using Notifications.Wpf.Core;
 using XmlDiffTool.Infrastructure;
 using XmlDiffTool.Models;
 using XmlDiffTool.Services;

@@ -23,8 +23,6 @@ namespace XmlDiffTool.Models
 
         public bool HasMissingValue => IsLeftMissing || IsRightMissing;
 
-        public bool HasDifferentValue => HasDifferentValue(ignoreCase: false);
-
         public bool HasDifferentValue(bool ignoreCase)
         {
             var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
