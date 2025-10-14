@@ -60,7 +60,6 @@
                       Grid.Row="2"
                       ItemsSource="{Binding DifferencesView}"
                       AutoGenerateColumns="False"
-                      IsReadOnly="True"
                       Margin="0,0,0,10"
                       MouseLeftButtonUp="DifferencesDataGrid_MouseLeftButtonUp">
                 <DataGrid.Columns>
@@ -83,7 +82,10 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Left XML Value" Binding="{Binding LeftValue}" Width="*">
+                    <DataGridTextColumn Header="Left XML Value"
+                                          Binding="{Binding LeftValue}"
+                                          Width="*"
+                                          IsReadOnly="True">
                         <DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell">
                                 <Setter Property="Background" Value="Transparent" />
@@ -96,7 +98,10 @@
                             </Style>
                         </DataGridTextColumn.CellStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="Right XML Value" Binding="{Binding RightValue}" Width="*">
+                    <DataGridTextColumn Header="Right XML Value"
+                                          Binding="{Binding RightValue}"
+                                          Width="*"
+                                          IsReadOnly="True">
                         <DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell">
                                 <Setter Property="Background" Value="Transparent" />
