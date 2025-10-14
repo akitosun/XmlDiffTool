@@ -42,10 +42,11 @@
                       Margin="12,0,0,0"
                       VerticalAlignment="Center"
                       IsChecked="{Binding OnlyShowDifferentParameters}" />
-            <CheckBox Content="Ignore Value Case"
-                      Margin="12,0,0,0"
+            <CheckBox Margin="12,0,0,0"
                       VerticalAlignment="Center"
-                      IsChecked="{Binding IgnoreCaseValues}" />
+                      IsChecked="{Binding IgnoreCaseValues}">
+                <TextBlock Text="Ignore Value Case" VerticalAlignment="Center" />
+            </CheckBox>
         </StackPanel>
 
         <DataGrid x:Name="DifferencesDataGrid"
