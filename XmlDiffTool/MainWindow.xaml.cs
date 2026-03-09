@@ -41,6 +41,7 @@ namespace XmlDiffTool
 
             _differencesView = CollectionViewSource.GetDefaultView(_differences);
             _differencesView.Filter = FilterDifferences;
+            _differencesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ParameterDifference.Title)));
 
             BrowseLeftCommand = new RelayCommand(_ => BrowseForFile(filePath => LeftFilePath = filePath));
             BrowseRightCommand = new RelayCommand(_ => BrowseForFile(filePath => RightFilePath = filePath));
@@ -238,7 +239,9 @@ namespace XmlDiffTool
 
             if (!string.IsNullOrWhiteSpace(_filterText))
             {
-                return difference.Name.Contains(_filterText, StringComparison.OrdinalIgnoreCase);
+                return difference.Name.Contains(_filterText, StringComparison.OrdinalIgnoreCase)
+                    || difference.Title.Contains(_filterText, StringComparison.OrdinalIgnoreCase)
+                    || difference.DisplayName.Contains(_filterText, StringComparison.OrdinalIgnoreCase);
             }
 
             return true;

@@ -17,11 +17,41 @@ namespace XmlDiffTool.Services
 
             return keys
                 .OrderBy(k => k)
-                .Select(key => new ParameterDifference(
-                    key,
-                    leftParameters.TryGetValue(key, out var leftValue) ? leftValue : null,
-                    rightParameters.TryGetValue(key, out var rightValue) ? rightValue : null))
+                .Select(key =>
+                {
+                    var (title, displayName) = ParseKey(key);
+
+                    return new ParameterDifference(
+                        key,
+                        title,
+                        displayName,
+                        leftParameters.TryGetValue(key, out var leftValue) ? leftValue : null,
+                        rightParameters.TryGetValue(key, out var rightValue) ? rightValue : null);
+                })
                 .ToList();
+        }
+
+        private static (string Title, string DisplayName) ParseKey(string key)
+        {
+            var attributeMarkerIndex = key.LastIndexOf("[@", System.StringComparison.Ordinal);
+            if (attributeMarkerIndex < 0)
+            {
+                return ("Unknown", key);
+            }
+
+            var tagPath = key[..attributeMarkerIndex];
+            var lastSlashIndex = tagPath.LastIndexOf('/');
+            var tagSegment = lastSlashIndex >= 0 ? tagPath[(lastSlashIndex + 1)..] : tagPath;
+            var tagNameEnd = tagSegment.IndexOf('[');
+            var tagName = tagNameEnd >= 0 ? tagSegment[..tagNameEnd] : tagSegment;
+
+            var attributeStart = attributeMarkerIndex + 2;
+            var attributeEnd = key.IndexOf(']', attributeStart);
+            var attributeName = attributeEnd > attributeStart
+                ? key[attributeStart..attributeEnd]
+                : key[attributeStart..];
+
+            return (string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName, attributeName);
         }
 
         private static Dictionary<string, string> LoadParameters(string path)
@@ -47,11 +77,6 @@ namespace XmlDiffTool.Services
             var childGroups = element.Elements()
                 .GroupBy(e => e.Name.LocalName)
                 .ToDictionary(g => g.Key, g => g.ToList());
-
-            if (!element.HasElements && !string.IsNullOrWhiteSpace(element.Value))
-            {
-                values[currentPath] = element.Value.Trim();
-            }
 
             foreach (var group in childGroups)
             {

@@ -61,8 +61,21 @@
                       IsReadOnly="True"
                       Margin="0,0,0,10"
                       MouseLeftButtonUp="DifferencesDataGrid_MouseLeftButtonUp">
+                <DataGrid.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <Border Background="#FFECECEC" Padding="8,4" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding Name, StringFormat=Tag: {0}}"
+                                               FontWeight="Bold"
+                                               FontSize="14" />
+                                </Border>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </DataGrid.GroupStyle>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*">
+                    <DataGridTextColumn Header="Attribute" Binding="{Binding DisplayName}" Width="2*">
                         <DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell">
                                 <Setter Property="Background" Value="Transparent" />
