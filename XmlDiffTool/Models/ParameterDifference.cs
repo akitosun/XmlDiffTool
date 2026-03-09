@@ -4,14 +4,20 @@ namespace XmlDiffTool.Models
 {
     public class ParameterDifference
     {
-        public ParameterDifference(string name, string? leftValue, string? rightValue)
+        public ParameterDifference(string name, string title, string displayName, string? leftValue, string? rightValue)
         {
             Name = name;
+            Title = title;
+            DisplayName = displayName;
             LeftValue = leftValue;
             RightValue = rightValue;
         }
 
         public string Name { get; }
+
+        public string Title { get; }
+
+        public string DisplayName { get; }
 
         public string? LeftValue { get; }
 
