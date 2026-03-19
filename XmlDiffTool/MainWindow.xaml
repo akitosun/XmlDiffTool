@@ -149,7 +149,7 @@
                                  Height="18"
                                  Minimum="0"
                                  Maximum="100"
-                                 Value="{Binding ProgressPercentage}" />
+                                 Value="{Binding ProgressPercentage, Mode=OneWay}" />
                     <TextBlock Text="{Binding ProgressPercentage, StringFormat={}{0}%}"
                                Margin="0,12,0,0"
                                HorizontalAlignment="Center"
