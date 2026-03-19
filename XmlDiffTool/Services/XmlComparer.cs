@@ -37,28 +37,42 @@ namespace XmlDiffTool.Services
             if (attributeMarkerIndex >= 0)
             {
                 var tagPath = key[..attributeMarkerIndex];
-                var lastSlashIndex = tagPath.LastIndexOf('/');
-                var tagSegment = lastSlashIndex >= 0 ? tagPath[(lastSlashIndex + 1)..] : tagPath;
-                var tagNameEnd = tagSegment.IndexOf('[');
-                var tagName = tagNameEnd >= 0 ? tagSegment[..tagNameEnd] : tagSegment;
-
                 var attributeStart = attributeMarkerIndex + 2;
                 var attributeEnd = key.IndexOf(']', attributeStart);
                 var attributeName = attributeEnd > attributeStart
                     ? key[attributeStart..attributeEnd]
                     : key[attributeStart..];
 
-                return (string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName, attributeName);
+                return (GetTagName(tagPath), attributeName);
             }
 
-            var lastPathSeparatorIndex = key.LastIndexOf('/');
-            var rawSegment = lastPathSeparatorIndex >= 0 ? key[(lastPathSeparatorIndex + 1)..] : key;
-            var valueMarkerIndex = rawSegment.IndexOf("[#", System.StringComparison.Ordinal);
-            var tagSegment = valueMarkerIndex >= 0 ? rawSegment[..valueMarkerIndex] : rawSegment;
+            var valueMarkerIndex = key.LastIndexOf("[#", System.StringComparison.Ordinal);
+            var tagPath = valueMarkerIndex >= 0 ? key[..valueMarkerIndex] : key;
+            var currentTagName = GetTagName(tagPath);
+            var parentTagName = GetParentTagName(tagPath);
+
+            return (parentTagName, currentTagName);
+        }
+
+        private static string GetParentTagName(string path)
+        {
+            var lastSlashIndex = path.LastIndexOf('/');
+            if (lastSlashIndex < 0)
+            {
+                return GetTagName(path);
+            }
+
+            return GetTagName(path[..lastSlashIndex]);
+        }
+
+        private static string GetTagName(string path)
+        {
+            var lastSlashIndex = path.LastIndexOf('/');
+            var tagSegment = lastSlashIndex >= 0 ? path[(lastSlashIndex + 1)..] : path;
             var tagNameEnd = tagSegment.IndexOf('[');
             var tagName = tagNameEnd >= 0 ? tagSegment[..tagNameEnd] : tagSegment;
 
-            return (string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName, "Value");
+            return string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName;
         }
 
         private static Dictionary<string, string> LoadParameters(string path)
