@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Linq;
+using System.Text;
+using System.Xml;
 using XmlDiffTool.Models;
 
 namespace XmlDiffTool.Services
@@ -15,20 +15,20 @@ namespace XmlDiffTool.Services
             var keys = new HashSet<string>(leftParameters.Keys);
             keys.UnionWith(rightParameters.Keys);
 
-            return keys
-                .OrderBy(k => k)
-                .Select(key =>
-                {
-                    var (title, displayName) = ParseKey(key);
+            var orderedKeys = new List<string>(keys);
+            orderedKeys.Sort(System.StringComparer.Ordinal);
 
-                    return new ParameterDifference(
-                        key,
-                        title,
-                        displayName,
-                        leftParameters.TryGetValue(key, out var leftValue) ? leftValue : null,
-                        rightParameters.TryGetValue(key, out var rightValue) ? rightValue : null);
-                })
-                .ToList();
+            var differences = new List<ParameterDifference>(orderedKeys.Count);
+            foreach (var key in orderedKeys)
+            {
+                var (title, displayName) = ParseKey(key);
+                leftParameters.TryGetValue(key, out var leftValue);
+                rightParameters.TryGetValue(key, out var rightValue);
+
+                differences.Add(new ParameterDifference(key, title, displayName, leftValue, rightValue));
+            }
+
+            return differences;
         }
 
         private static (string Title, string DisplayName) ParseKey(string key)
@@ -77,42 +77,119 @@ namespace XmlDiffTool.Services
 
         private static Dictionary<string, string> LoadParameters(string path)
         {
-            var document = XDocument.Load(path);
-            var result = new Dictionary<string, string>();
-            if (document.Root is not null)
+            var settings = new XmlReaderSettings
             {
-                TraverseElement(document.Root, document.Root.Name.LocalName, result);
+                IgnoreComments = true,
+                IgnoreProcessingInstructions = true
+            };
+
+            var values = new Dictionary<string, string>();
+            var elementStack = new Stack<ElementContext>();
+
+            using var reader = XmlReader.Create(path, settings);
+            while (reader.Read())
+            {
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        var elementContext = CreateElementContext(reader, elementStack, values);
+                        if (reader.IsEmptyElement)
+                        {
+                            values[$"{elementContext.Path}[#text]"] = string.Empty;
+                            continue;
+                        }
+
+                        elementStack.Push(elementContext);
+                        break;
+
+                    case XmlNodeType.Text:
+                    case XmlNodeType.CDATA:
+                    case XmlNodeType.SignificantWhitespace:
+                    case XmlNodeType.Whitespace:
+                        if (elementStack.Count > 0)
+                        {
+                            elementStack.Peek().AppendText(reader.Value);
+                        }
+
+                        break;
+
+                    case XmlNodeType.EndElement:
+                        if (elementStack.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        var completedElement = elementStack.Pop();
+                        if (!completedElement.HasChildElements)
+                        {
+                            values[$"{completedElement.Path}[#text]"] = completedElement.GetValue();
+                        }
+
+                        break;
+                }
             }
 
-            return result;
+            return values;
         }
 
-        private static void TraverseElement(XElement element, string currentPath, IDictionary<string, string> values)
+        private static ElementContext CreateElementContext(XmlReader reader, Stack<ElementContext> elementStack, IDictionary<string, string> values)
         {
-            foreach (var attribute in element.Attributes())
+            string path;
+            if (elementStack.Count == 0)
             {
-                var attributePath = $"{currentPath}[@{attribute.Name.LocalName}]";
-                values[attributePath] = attribute.Value;
+                path = reader.LocalName;
+            }
+            else
+            {
+                var parentContext = elementStack.Peek();
+                parentContext.HasChildElements = true;
+                var childIndex = parentContext.GetNextChildIndex(reader.LocalName);
+                path = $"{parentContext.Path}/{reader.LocalName}[{childIndex}]";
             }
 
-            if (!element.Elements().Any())
+            if (reader.HasAttributes)
             {
-                var valuePath = $"{currentPath}[#text]";
-                values[valuePath] = element.Value;
-            }
-
-            var childGroups = element.Elements()
-                .GroupBy(e => e.Name.LocalName)
-                .ToDictionary(g => g.Key, g => g.ToList());
-
-            foreach (var group in childGroups)
-            {
-                for (var index = 0; index < group.Value.Count; index++)
+                while (reader.MoveToNextAttribute())
                 {
-                    var child = group.Value[index];
-                    var childPath = $"{currentPath}/{child.Name.LocalName}[{index}]";
-                    TraverseElement(child, childPath, values);
+                    values[$"{path}[@{reader.LocalName}]"] = reader.Value;
                 }
+
+                reader.MoveToElement();
+            }
+
+            return new ElementContext(path);
+        }
+
+        private sealed class ElementContext
+        {
+            private readonly Dictionary<string, int> _childNameCounts = new();
+            private StringBuilder? _textBuilder;
+
+            public ElementContext(string path)
+            {
+                Path = path;
+            }
+
+            public string Path { get; }
+
+            public bool HasChildElements { get; set; }
+
+            public int GetNextChildIndex(string childName)
+            {
+                _childNameCounts.TryGetValue(childName, out var currentIndex);
+                _childNameCounts[childName] = currentIndex + 1;
+                return currentIndex;
+            }
+
+            public void AppendText(string value)
+            {
+                _textBuilder ??= new StringBuilder();
+                _textBuilder.Append(value);
+            }
+
+            public string GetValue()
+            {
+                return _textBuilder?.ToString() ?? string.Empty;
             }
         }
     }

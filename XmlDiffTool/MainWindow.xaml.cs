@@ -1,6 +1,5 @@
 using System;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -23,8 +22,8 @@ namespace XmlDiffTool
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private readonly XmlComparer _comparer = new();
-        private readonly ObservableCollection<ParameterDifference> _differences = new();
-        private readonly ICollectionView _differencesView;
+        private List<ParameterDifference> _differences = new();
+        private ICollectionView _differencesView;
         private readonly NotificationManager _notificationManager = new();
         private string? _leftFilePath;
         private string? _rightFilePath;
@@ -39,19 +38,12 @@ namespace XmlDiffTool
             InitializeComponent();
             DataContext = this;
 
-            _differencesView = CollectionViewSource.GetDefaultView(_differences);
-            _differencesView.Filter = FilterDifferences;
-            _differencesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ParameterDifference.Title)));
+            _differencesView = CreateDifferencesView(_differences);
 
             BrowseLeftCommand = new RelayCommand(_ => BrowseForFile(filePath => LeftFilePath = filePath));
             BrowseRightCommand = new RelayCommand(_ => BrowseForFile(filePath => RightFilePath = filePath));
             CompareCommand = new RelayCommand(async _ => await CompareFilesAsync(), _ => CanCompareFiles());
             ExportCommand = new RelayCommand(_ => ExportResults(), _ => !IsBusy && _differencesView.Cast<ParameterDifference>().Any());
-
-            if (_differencesView is INotifyCollectionChanged notifyCollection)
-            {
-                notifyCollection.CollectionChanged += (_, _) => UpdateResultSummary();
-            }
 
             UpdateResultSummary();
         }
@@ -80,7 +72,18 @@ namespace XmlDiffTool
             }
         }
 
-        public ICollectionView DifferencesView => _differencesView;
+        public ICollectionView DifferencesView
+        {
+            get => _differencesView;
+            private set
+            {
+                if (!ReferenceEquals(_differencesView, value))
+                {
+                    _differencesView = value;
+                    OnPropertyChanged(nameof(DifferencesView));
+                }
+            }
+        }
 
         public string? LeftFilePath
         {
@@ -198,13 +201,7 @@ namespace XmlDiffTool
 
                 var differences = await Task.Run(() => _comparer.Compare(leftPath, rightPath).ToList());
 
-                foreach (var difference in differences)
-                {
-                    _differences.Add(difference);
-                }
-
-                _differencesView.Refresh();
-                UpdateResultSummary();
+                SetDifferences(differences);
             }
             catch (Exception ex)
             {
@@ -218,9 +215,28 @@ namespace XmlDiffTool
 
         private void ClearResults()
         {
-            _differences.Clear();
-            _differencesView.Refresh();
+            SetDifferences(Array.Empty<ParameterDifference>());
             ResultSummary = string.Empty;
+        }
+
+        private ICollectionView CreateDifferencesView(List<ParameterDifference> differences)
+        {
+            var view = new ListCollectionView(differences);
+            view.Filter = FilterDifferences;
+            view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(ParameterDifference.Title)));
+            return view;
+        }
+
+        private void SetDifferences(IReadOnlyCollection<ParameterDifference> differences)
+        {
+            _differences = differences.Count == 0
+                ? new List<ParameterDifference>()
+                : new List<ParameterDifference>(differences);
+
+            DifferencesView = CreateDifferencesView(_differences);
+            DifferencesView.Refresh();
+            UpdateResultSummary();
+            RaiseCommandStates();
         }
 
         private bool FilterDifferences(object obj)
