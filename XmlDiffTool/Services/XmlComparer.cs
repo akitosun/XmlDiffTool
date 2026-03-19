@@ -34,24 +34,31 @@ namespace XmlDiffTool.Services
         private static (string Title, string DisplayName) ParseKey(string key)
         {
             var attributeMarkerIndex = key.LastIndexOf("[@", System.StringComparison.Ordinal);
-            if (attributeMarkerIndex < 0)
+            if (attributeMarkerIndex >= 0)
             {
-                return ("Unknown", key);
+                var tagPath = key[..attributeMarkerIndex];
+                var lastSlashIndex = tagPath.LastIndexOf('/');
+                var tagSegment = lastSlashIndex >= 0 ? tagPath[(lastSlashIndex + 1)..] : tagPath;
+                var tagNameEnd = tagSegment.IndexOf('[');
+                var tagName = tagNameEnd >= 0 ? tagSegment[..tagNameEnd] : tagSegment;
+
+                var attributeStart = attributeMarkerIndex + 2;
+                var attributeEnd = key.IndexOf(']', attributeStart);
+                var attributeName = attributeEnd > attributeStart
+                    ? key[attributeStart..attributeEnd]
+                    : key[attributeStart..];
+
+                return (string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName, attributeName);
             }
 
-            var tagPath = key[..attributeMarkerIndex];
-            var lastSlashIndex = tagPath.LastIndexOf('/');
-            var tagSegment = lastSlashIndex >= 0 ? tagPath[(lastSlashIndex + 1)..] : tagPath;
+            var lastPathSeparatorIndex = key.LastIndexOf('/');
+            var rawSegment = lastPathSeparatorIndex >= 0 ? key[(lastPathSeparatorIndex + 1)..] : key;
+            var valueMarkerIndex = rawSegment.IndexOf("[#", System.StringComparison.Ordinal);
+            var tagSegment = valueMarkerIndex >= 0 ? rawSegment[..valueMarkerIndex] : rawSegment;
             var tagNameEnd = tagSegment.IndexOf('[');
             var tagName = tagNameEnd >= 0 ? tagSegment[..tagNameEnd] : tagSegment;
 
-            var attributeStart = attributeMarkerIndex + 2;
-            var attributeEnd = key.IndexOf(']', attributeStart);
-            var attributeName = attributeEnd > attributeStart
-                ? key[attributeStart..attributeEnd]
-                : key[attributeStart..];
-
-            return (string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName, attributeName);
+            return (string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName, "Value");
         }
 
         private static Dictionary<string, string> LoadParameters(string path)
@@ -72,6 +79,12 @@ namespace XmlDiffTool.Services
             {
                 var attributePath = $"{currentPath}[@{attribute.Name.LocalName}]";
                 values[attributePath] = attribute.Value;
+            }
+
+            if (!element.Elements().Any())
+            {
+                var valuePath = $"{currentPath}[#text]";
+                values[valuePath] = element.Value;
             }
 
             var childGroups = element.Elements()
