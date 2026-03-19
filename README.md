@@ -1,6 +1,6 @@
 # XML Diff Tool
 
-XML Diff Tool is a WPF desktop application for Windows that compares the contents of two XML files and highlights any differences. It loads each document into a flattened list of parameter/value pairs, allowing you to quickly spot missing nodes, attribute changes, or mismatched values.
+XML Diff Tool is a WPF desktop application for Windows that compares the contents of two XML files and highlights any differences. It loads each document into a flattened list of parameter/value pairs, allowing you to quickly spot missing nodes, attribute changes, element text changes, or mismatched values.
 
 ## Features
 
@@ -60,7 +60,7 @@ The status text at the bottom summarizes the visible differences, including the 
 
 ## How It Works
 
-The comparer flattens each XML document by traversing every node, combining element names, indexes, and attributes into unique parameter paths. These paths and their values are compared to build the difference list displayed in the UI.
+The comparer flattens each XML document by traversing every node, combining element names, indexes, attributes, and leaf-element text values into unique parameter paths. These paths and their values are compared to build the difference list displayed in the UI.
 
 ## License
 
