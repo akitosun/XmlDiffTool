@@ -32,6 +32,7 @@ namespace XmlDiffTool
         private bool _ignoreCaseValues;
         private string _resultSummary = string.Empty;
         private bool _isBusy;
+        private int _progressPercentage;
 
         public MainWindow()
         {
@@ -158,6 +159,22 @@ namespace XmlDiffTool
             }
         }
 
+        public int ProgressPercentage
+        {
+            get => _progressPercentage;
+            private set
+            {
+                if (_progressPercentage != value)
+                {
+                    _progressPercentage = value;
+                    OnPropertyChanged(nameof(ProgressPercentage));
+                    OnPropertyChanged(nameof(ProgressText));
+                }
+            }
+        }
+
+        public string ProgressText => $"Comparing... {ProgressPercentage}%";
+
         public string ResultSummary
         {
             get => _resultSummary;
@@ -194,12 +211,14 @@ namespace XmlDiffTool
             try
             {
                 IsBusy = true;
+                ProgressPercentage = 0;
                 ClearResults();
 
                 var leftPath = _leftFilePath!;
                 var rightPath = _rightFilePath!;
+                var progress = new Progress<int>(value => ProgressPercentage = value);
 
-                var differences = await Task.Run(() => _comparer.Compare(leftPath, rightPath).ToList());
+                var differences = await Task.Run(() => _comparer.Compare(leftPath, rightPath, progress).ToList());
 
                 SetDifferences(differences);
             }
@@ -210,6 +229,7 @@ namespace XmlDiffTool
             finally
             {
                 IsBusy = false;
+                ProgressPercentage = 0;
             }
         }
 

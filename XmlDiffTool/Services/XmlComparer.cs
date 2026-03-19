@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Xml;
 using XmlDiffTool.Models;
@@ -7,10 +9,12 @@ namespace XmlDiffTool.Services
 {
     public class XmlComparer
     {
-        public IReadOnlyCollection<ParameterDifference> Compare(string leftPath, string rightPath)
+        public IReadOnlyCollection<ParameterDifference> Compare(string leftPath, string rightPath, IProgress<int>? progress = null)
         {
-            var leftParameters = LoadParameters(leftPath);
-            var rightParameters = LoadParameters(rightPath);
+            progress?.Report(0);
+
+            var leftParameters = LoadParameters(leftPath, progress, 0, 45);
+            var rightParameters = LoadParameters(rightPath, progress, 45, 90);
 
             var keys = new HashSet<string>(leftParameters.Keys);
             keys.UnionWith(rightParameters.Keys);
@@ -19,15 +23,18 @@ namespace XmlDiffTool.Services
             orderedKeys.Sort(System.StringComparer.Ordinal);
 
             var differences = new List<ParameterDifference>(orderedKeys.Count);
-            foreach (var key in orderedKeys)
+            for (var index = 0; index < orderedKeys.Count; index++)
             {
+                var key = orderedKeys[index];
                 var (title, displayName) = ParseKey(key);
                 leftParameters.TryGetValue(key, out var leftValue);
                 rightParameters.TryGetValue(key, out var rightValue);
 
                 differences.Add(new ParameterDifference(key, title, displayName, leftValue, rightValue));
+                ReportScaledProgress(progress, 90, 100, index + 1, orderedKeys.Count);
             }
 
+            progress?.Report(100);
             return differences;
         }
 
@@ -75,7 +82,7 @@ namespace XmlDiffTool.Services
             return string.IsNullOrWhiteSpace(tagName) ? "Unknown" : tagName;
         }
 
-        private static Dictionary<string, string> LoadParameters(string path)
+        private static Dictionary<string, string> LoadParameters(string path, IProgress<int>? progress, int progressStart, int progressEnd)
         {
             var settings = new XmlReaderSettings
             {
@@ -86,7 +93,11 @@ namespace XmlDiffTool.Services
             var values = new Dictionary<string, string>();
             var elementStack = new Stack<ElementContext>();
 
-            using var reader = XmlReader.Create(path, settings);
+            using var stream = File.OpenRead(path);
+            using var reader = XmlReader.Create(stream, settings);
+            progress?.Report(progressStart);
+            var lastReportedProgress = progressStart;
+
             while (reader.Read())
             {
                 switch (reader.NodeType)
@@ -127,9 +138,56 @@ namespace XmlDiffTool.Services
 
                         break;
                 }
+
+                ReportStreamProgress(progress, progressStart, progressEnd, stream, lastReportedProgress, forceReport: false, out lastReportedProgress);
             }
 
+            ReportStreamProgress(progress, progressStart, progressEnd, stream, lastReportedProgress, forceReport: true, out _);
             return values;
+        }
+
+
+        private static void ReportScaledProgress(IProgress<int>? progress, int start, int end, int completed, int total)
+        {
+            if (progress is null || total <= 0)
+            {
+                return;
+            }
+
+            var percent = start + (int)(((long)(end - start) * completed) / total);
+            progress.Report(percent);
+        }
+
+        private static void ReportStreamProgress(IProgress<int>? progress, int start, int end, FileStream stream, int lastReportedProgress, bool forceReport, out int updatedLastReportedProgress)
+        {
+            updatedLastReportedProgress = lastReportedProgress;
+            if (progress is null)
+            {
+                return;
+            }
+
+            if (stream.Length <= 0)
+            {
+                if (forceReport && lastReportedProgress != end)
+                {
+                    progress.Report(end);
+                    updatedLastReportedProgress = end;
+                }
+
+                return;
+            }
+
+            var percent = start + (int)(((long)(end - start) * stream.Position) / stream.Length);
+            if (forceReport)
+            {
+                percent = end;
+            }
+
+            if (percent != lastReportedProgress)
+            {
+                progress.Report(percent);
+                updatedLastReportedProgress = percent;
+            }
         }
 
         private static ElementContext CreateElementContext(XmlReader reader, Stack<ElementContext> elementStack, IDictionary<string, string> values)

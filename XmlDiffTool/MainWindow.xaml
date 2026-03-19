@@ -132,39 +132,30 @@
                 Background="#80FFFFFF"
                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Panel.ZIndex="1">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Grid Width="60" Height="60">
-                    <Grid.Triggers>
-                        <EventTrigger RoutedEvent="Grid.Loaded">
-                            <BeginStoryboard x:Name="SpinnerStoryboardAction">
-                                <Storyboard RepeatBehavior="Forever">
-                                    <DoubleAnimation Storyboard.TargetName="SpinnerArcRotate"
-                                                     Storyboard.TargetProperty="Angle"
-                                                     From="0" To="360"
-                                                     Duration="0:0:1" />
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-                        <EventTrigger RoutedEvent="Grid.Unloaded">
-                            <StopStoryboard BeginStoryboardName="SpinnerStoryboardAction" />
-                        </EventTrigger>
-                    </Grid.Triggers>
-                    <Ellipse Width="48" Height="48" Stroke="LightGray" StrokeThickness="6" Opacity="0.3" />
-                    <Path Stroke="#FF0078D7" StrokeThickness="6" StrokeStartLineCap="Round" StrokeEndLineCap="Round">
-                        <Path.Data>
-                            <PathGeometry>
-                                <PathFigure StartPoint="30,12" IsClosed="False">
-                                    <ArcSegment Point="30,48" Size="18,18" SweepDirection="Clockwise" IsLargeArc="False" />
-                                </PathFigure>
-                            </PathGeometry>
-                        </Path.Data>
-                        <Path.RenderTransform>
-                            <RotateTransform x:Name="SpinnerArcRotate" CenterX="24" CenterY="24" />
-                        </Path.RenderTransform>
-                    </Path>
-                </Grid>
-                <TextBlock Text="Comparing..." FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,16,0,0" />
-            </StackPanel>
+            <Border Width="320"
+                    Padding="20"
+                    Background="White"
+                    BorderBrush="#FFD0D0D0"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="{Binding ProgressText}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
+                    <ProgressBar Margin="0,16,0,0"
+                                 Height="18"
+                                 Minimum="0"
+                                 Maximum="100"
+                                 Value="{Binding ProgressPercentage}" />
+                    <TextBlock Text="{Binding ProgressPercentage, StringFormat={}{0}%}"
+                               Margin="0,12,0,0"
+                               HorizontalAlignment="Center"
+                               FontWeight="Medium" />
+                </StackPanel>
+            </Border>
         </Border>
     </Grid>
 </Window>
