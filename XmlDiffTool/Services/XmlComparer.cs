@@ -36,20 +36,20 @@ namespace XmlDiffTool.Services
             var attributeMarkerIndex = key.LastIndexOf("[@", System.StringComparison.Ordinal);
             if (attributeMarkerIndex >= 0)
             {
-                var tagPath = key[..attributeMarkerIndex];
+                var attributeTagPath = key[..attributeMarkerIndex];
                 var attributeStart = attributeMarkerIndex + 2;
                 var attributeEnd = key.IndexOf(']', attributeStart);
                 var attributeName = attributeEnd > attributeStart
                     ? key[attributeStart..attributeEnd]
                     : key[attributeStart..];
 
-                return (GetTagName(tagPath), attributeName);
+                return (GetTagName(attributeTagPath), attributeName);
             }
 
             var valueMarkerIndex = key.LastIndexOf("[#", System.StringComparison.Ordinal);
-            var tagPath = valueMarkerIndex >= 0 ? key[..valueMarkerIndex] : key;
-            var currentTagName = GetTagName(tagPath);
-            var parentTagName = GetParentTagName(tagPath);
+            var valueTagPath = valueMarkerIndex >= 0 ? key[..valueMarkerIndex] : key;
+            var currentTagName = GetTagName(valueTagPath);
+            var parentTagName = GetParentTagName(valueTagPath);
 
             return (parentTagName, currentTagName);
         }
