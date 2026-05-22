@@ -4,13 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="XML Diff Tool" Height="600" Width="900">
+        Title="XML Diff Tool" Height="360" Width="760"
+        MinHeight="320" MinWidth="680">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
 
     <Grid>
-        <Grid Margin="10">
+        <Grid Margin="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -18,101 +19,87 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Padding="10" BorderThickness="1" BorderBrush="LightGray" CornerRadius="4">
+            <TextBlock Grid.Row="0"
+                       Text="XML Diff HTML Report"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,14" />
+
+            <Border Grid.Row="1"
+                    Padding="14"
+                    BorderThickness="1"
+                    BorderBrush="#FFD6D6D6"
+                    CornerRadius="6"
+                    Background="White">
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                        <TextBox Width="280" Margin="0,0,8,0" Text="{Binding LeftFilePath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" />
-                        <Button Content="Browse..." Width="90" Command="{Binding BrowseLeftCommand}" />
-                    </StackPanel>
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Text="Left XML"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold" />
+                    <TextBox Grid.Row="0"
+                             Grid.Column="1"
+                             Height="28"
+                             Margin="0,0,8,8"
+                             Text="{Binding LeftFilePath, UpdateSourceTrigger=PropertyChanged}"
+                             IsReadOnly="True" />
+                    <Button Grid.Row="0"
+                            Grid.Column="2"
+                            Content="Browse..."
+                            Width="96"
+                            Margin="0,0,0,8"
+                            Command="{Binding BrowseLeftCommand}" />
 
-                    <Button Grid.Column="1" Content="Compare" Width="120" Margin="10,0" Command="{Binding CompareCommand}" />
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Text="Right XML"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold" />
+                    <TextBox Grid.Row="1"
+                             Grid.Column="1"
+                             Height="28"
+                             Margin="0,0,8,8"
+                             Text="{Binding RightFilePath, UpdateSourceTrigger=PropertyChanged}"
+                             IsReadOnly="True" />
+                    <Button Grid.Row="1"
+                            Grid.Column="2"
+                            Content="Browse..."
+                            Width="96"
+                            Margin="0,0,0,8"
+                            Command="{Binding BrowseRightCommand}" />
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                        <TextBox Width="280" Margin="0,0,8,0" Text="{Binding RightFilePath, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True" />
-                        <Button Content="Browse..." Width="90" Command="{Binding BrowseRightCommand}" />
+                    <StackPanel Grid.Row="2"
+                                Grid.Column="1"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <CheckBox IsChecked="{Binding IgnoreCaseValues}"
+                                  VerticalAlignment="Center">
+                            <TextBlock Text="Ignore case for tags, attributes, and values"
+                                       VerticalAlignment="Center" />
+                        </CheckBox>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10" VerticalAlignment="Center">
-                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <TextBox Width="240" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
-                <CheckBox Content="Only Show Different Parameter"
-                          Margin="12,0,0,0"
-                          VerticalAlignment="Center"
-                          IsChecked="{Binding OnlyShowDifferentParameters}" />
-                <CheckBox Margin="12,0,0,0"
-                          VerticalAlignment="Center"
-                          IsChecked="{Binding IgnoreCaseValues}">
-                    <TextBlock Text="Ignore Value Case" VerticalAlignment="Center" />
-                </CheckBox>
-            </StackPanel>
+            <TextBlock Grid.Row="2"
+                       Text="HTML reports include Bootstrap styling, side-by-side values, expandable nodes, and report-level filters for left-only and right-only elements."
+                       TextWrapping="Wrap"
+                       Foreground="#FF606060"
+                       Margin="0,16,0,0" />
 
-            <DataGrid x:Name="DifferencesDataGrid"
-                      Grid.Row="2"
-                      ItemsSource="{Binding DifferencesView}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      Margin="0,0,0,10"
-                      MouseLeftButtonUp="DifferencesDataGrid_MouseLeftButtonUp">
-                <DataGrid.GroupStyle>
-                    <GroupStyle>
-                        <GroupStyle.HeaderTemplate>
-                            <DataTemplate>
-                                <Border Background="#FFECECEC" Padding="8,4" Margin="0,4,0,0">
-                                    <TextBlock Text="{Binding Name, StringFormat=Tag: {0}}"
-                                               FontWeight="Bold"
-                                               FontSize="14" />
-                                </Border>
-                            </DataTemplate>
-                        </GroupStyle.HeaderTemplate>
-                    </GroupStyle>
-                </DataGrid.GroupStyle>
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Attribute" Binding="{Binding DisplayName}" Width="2*">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="Background" Value="Transparent" />
-                                <Setter Property="Foreground" Value="Black" />
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Left XML Value" Binding="{Binding LeftValue}" Width="*">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="Background" Value="Transparent" />
-                                <Setter Property="Foreground" Value="Black" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsLeftMissing}" Value="True">
-                                        <Setter Property="Background" Value="Red" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>
-                    <DataGridTextColumn Header="Right XML Value" Binding="{Binding RightValue}" Width="*">
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="Background" Value="Transparent" />
-                                <Setter Property="Foreground" Value="Black" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsRightMissing}" Value="True">
-                                        <Setter Property="Background" Value="Red" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-
-            <Grid Grid.Row="3">
+            <Grid Grid.Row="3" Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -121,10 +108,11 @@
                            VerticalAlignment="Center"
                            Margin="0,0,10,0" />
                 <Button Grid.Column="1"
-                        Content="Export"
-                        Width="120"
+                        Content="Generate HTML Report"
+                        Width="170"
+                        Height="34"
                         HorizontalAlignment="Right"
-                        Command="{Binding ExportCommand}" />
+                        Command="{Binding CompareCommand}" />
             </Grid>
         </Grid>
 
