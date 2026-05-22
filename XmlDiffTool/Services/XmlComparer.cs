@@ -196,15 +196,75 @@ namespace XmlDiffTool.Services
         private static XmlDifferenceNode CreateMissingElementNode(XElement element, string parentPath, bool isLeftMissing = false, bool isRightMissing = false)
         {
             var path = AppendPath(parentPath, element.Name.LocalName);
-            var value = SummarizeElement(element);
-            return new XmlDifferenceNode(
+            var node = new XmlDifferenceNode(
                 path,
                 element.Name.LocalName,
                 XmlDifferenceKind.Element,
-                isLeftMissing ? null : value,
-                isRightMissing ? null : value,
+                isLeftMissing ? null : NormalizeText(element.Value),
+                isRightMissing ? null : NormalizeText(element.Value),
                 isLeftMissing,
                 isRightMissing);
+
+            foreach (var attribute in element.Attributes()
+                         .Where(attribute => !attribute.IsNamespaceDeclaration)
+                         .OrderBy(attribute => attribute.Name.LocalName, StringComparer.OrdinalIgnoreCase))
+            {
+                node.Children.Add(new XmlDifferenceNode(
+                    $"{path}[@{attribute.Name.LocalName}]",
+                    $"@{attribute.Name.LocalName}",
+                    XmlDifferenceKind.Attribute,
+                    isLeftMissing ? null : attribute.Value,
+                    isRightMissing ? null : attribute.Value,
+                    isLeftMissing,
+                    isRightMissing));
+            }
+
+            var childElements = element.Elements().ToList();
+            if (childElements.Count == 0)
+            {
+                var value = NormalizeText(element.Value);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    node.Children.Add(new XmlDifferenceNode(
+                        $"{path}[#value]",
+                        "#value",
+                        XmlDifferenceKind.Value,
+                        isLeftMissing ? null : value,
+                        isRightMissing ? null : value,
+                        isLeftMissing,
+                        isRightMissing));
+                }
+
+                return node;
+            }
+
+            node = new XmlDifferenceNode(
+                path,
+                element.Name.LocalName,
+                XmlDifferenceKind.Element,
+                isLeftMissing: isLeftMissing,
+                isRightMissing: isRightMissing);
+
+            foreach (var attribute in element.Attributes()
+                         .Where(attribute => !attribute.IsNamespaceDeclaration)
+                         .OrderBy(attribute => attribute.Name.LocalName, StringComparer.OrdinalIgnoreCase))
+            {
+                node.Children.Add(new XmlDifferenceNode(
+                    $"{path}[@{attribute.Name.LocalName}]",
+                    $"@{attribute.Name.LocalName}",
+                    XmlDifferenceKind.Attribute,
+                    isLeftMissing ? null : attribute.Value,
+                    isRightMissing ? null : attribute.Value,
+                    isLeftMissing,
+                    isRightMissing));
+            }
+
+            foreach (var child in childElements.OrderBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
+            {
+                node.Children.Add(CreateMissingElementNode(child, path, isLeftMissing, isRightMissing));
+            }
+
+            return node;
         }
 
         private static string BuildSignature(XElement element, CompareOptions options)
@@ -238,18 +298,6 @@ namespace XmlDiffTool.Services
             }
 
             return builder.ToString();
-        }
-
-        private static string SummarizeElement(XElement element)
-        {
-            if (!element.Elements().Any())
-            {
-                return NormalizeText(element.Value);
-            }
-
-            var childCount = element.Elements().Count();
-            var attributeCount = element.Attributes().Count(attribute => !attribute.IsNamespaceDeclaration);
-            return $"{childCount} child element(s), {attributeCount} attribute(s)";
         }
 
         private static string AppendPath(string parentPath, string name)
