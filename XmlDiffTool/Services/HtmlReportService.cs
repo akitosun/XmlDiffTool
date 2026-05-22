@@ -55,7 +55,7 @@ namespace XmlDiffTool.Services
             builder.AppendLine("    <header class=\"report-header mb-3\">");
             builder.AppendLine("      <div>");
             builder.AppendLine("        <h1>XML Diff Report</h1>");
-            builder.AppendLine($"        <div class=\"text-muted small\">Generated {Encode(generatedAt)} · Ignore case: {Encode(ignoreCase ? "Yes" : "No")} · List order ignored</div>");
+            builder.AppendLine($"        <div class=\"text-muted small\">Generated {Encode(generatedAt)} &middot; Ignore case: {Encode(ignoreCase ? "Yes" : "No")} &middot; List order ignored</div>");
             builder.AppendLine("      </div>");
             builder.AppendLine("    </header>");
             builder.AppendLine("    <section class=\"summary-grid mb-3\">");
@@ -108,6 +108,7 @@ namespace XmlDiffTool.Services
             var sideClass = node.IsLeftMissing ? "right-only" : node.IsRightMissing ? "left-only" : "changed";
             var kindClass = node.Kind.ToString().ToLowerInvariant();
             var hasChildren = node.Children.Count > 0;
+            var hasVisibleValues = ShouldShowValues(node);
             var indent = Math.Min(depth, 8);
 
             builder.AppendLine($"      <article class=\"diff-node {sideClass} {kindClass}\" data-side=\"{sideClass}\" style=\"--depth:{indent}\">");
@@ -115,7 +116,7 @@ namespace XmlDiffTool.Services
 
             if (hasChildren)
             {
-                builder.AppendLine($"          <button class=\"toggle\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#{id}\" aria-expanded=\"true\" aria-controls=\"{id}\">▾</button>");
+                builder.AppendLine($"          <button class=\"toggle\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#{id}\" aria-expanded=\"true\" aria-controls=\"{id}\">-</button>");
             }
             else
             {
@@ -123,11 +124,16 @@ namespace XmlDiffTool.Services
             }
 
             builder.AppendLine("          <div class=\"diff-main\">");
-            builder.AppendLine($"            <div class=\"diff-title\"><span class=\"badge text-bg-light\">{Encode(node.Kind.ToString())}</span><code>{Encode(node.Path)}</code></div>");
-            builder.AppendLine("            <div class=\"diff-values\">");
-            builder.AppendLine($"              <div class=\"value-pane left\"><span>Left</span><pre>{Encode(DisplayValue(node.LeftValue, node.IsLeftMissing))}</pre></div>");
-            builder.AppendLine($"              <div class=\"value-pane right\"><span>Right</span><pre>{Encode(DisplayValue(node.RightValue, node.IsRightMissing))}</pre></div>");
-            builder.AppendLine("            </div>");
+            builder.AppendLine($"            <div class=\"diff-title{(hasVisibleValues ? string.Empty : " mb-0")}\"><span class=\"badge text-bg-light\">{Encode(node.Kind.ToString())}</span><code>{Encode(node.Path)}</code></div>");
+
+            if (hasVisibleValues)
+            {
+                builder.AppendLine("            <div class=\"diff-values\">");
+                builder.AppendLine($"              <div class=\"value-pane left\"><span>Left</span><pre>{Encode(DisplayValue(node.LeftValue, node.IsLeftMissing))}</pre></div>");
+                builder.AppendLine($"              <div class=\"value-pane right\"><span>Right</span><pre>{Encode(DisplayValue(node.RightValue, node.IsRightMissing))}</pre></div>");
+                builder.AppendLine("            </div>");
+            }
+
             builder.AppendLine("          </div>");
             builder.AppendLine("        </div>");
 
@@ -148,6 +154,14 @@ namespace XmlDiffTool.Services
         private static string DisplayValue(string? value, bool isMissing)
         {
             return isMissing ? "(missing)" : value ?? string.Empty;
+        }
+
+        private static bool ShouldShowValues(XmlDifferenceNode node)
+        {
+            return node.IsLeftMissing
+                || node.IsRightMissing
+                || !string.IsNullOrEmpty(node.LeftValue)
+                || !string.IsNullOrEmpty(node.RightValue);
         }
 
         private static int CountNodes(IEnumerable<XmlDifferenceNode> nodes)
@@ -179,10 +193,10 @@ namespace XmlDiffTool.Services
         private const string BootstrapCss = ":root{--bs-body-font-family:Segoe UI,Arial,sans-serif;--bs-body-color:#212529;--bs-body-bg:#f8f9fa;--bs-border-color:#dee2e6;--bs-primary:#0d6efd;--bs-danger:#dc3545;--bs-success:#198754;--bs-secondary:#6c757d}"
             + "*,::after,::before{box-sizing:border-box}body{margin:0;font-family:var(--bs-body-font-family);font-size:1rem;color:var(--bs-body-color);background:var(--bs-body-bg)}h1{margin:0;font-size:1.65rem}code{font-family:Cascadia Mono,Consolas,monospace;color:#222;word-break:break-word}.container-fluid{width:100%;padding-right:1rem;padding-left:1rem;margin-right:auto;margin-left:auto}.py-4{padding-top:1.5rem;padding-bottom:1.5rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.mb-3{margin-bottom:1rem}.small{font-size:.875rem}.text-muted{color:#6c757d}.sticky-top{position:sticky;top:0;z-index:1020}.form-check{display:inline-block;min-height:1.5rem;padding-left:1.5em;margin-right:1rem}.form-check-input{width:1em;height:1em;margin-top:.25em;margin-left:-1.5em;vertical-align:top}.form-check-label{cursor:pointer}.btn{display:inline-block;font-weight:400;line-height:1.5;text-align:center;text-decoration:none;vertical-align:middle;cursor:pointer;user-select:none;background-color:transparent;border:1px solid transparent;padding:.375rem .75rem;font-size:1rem;border-radius:.375rem}.btn-sm{padding:.25rem .5rem;font-size:.875rem;border-radius:.25rem}.btn-outline-secondary{color:#6c757d;border-color:#6c757d}.btn-outline-secondary:hover{color:#fff;background-color:#6c757d}.badge{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;line-height:1;text-align:center;white-space:nowrap;border-radius:.375rem}.text-bg-light{color:#000;background-color:#f8f9fa}.alert{position:relative;padding:1rem;border:1px solid transparent;border-radius:.375rem}.alert-success{color:#0f5132;background-color:#d1e7dd;border-color:#badbcc}.collapse:not(.show){display:none}";
 
-        private const string BootstrapJs = "(()=>{document.addEventListener(\"click\",event=>{const trigger=event.target.closest(\"[data-bs-toggle='collapse']\");if(!trigger)return;const target=document.querySelector(trigger.getAttribute(\"data-bs-target\"));if(!target)return;target.classList.toggle(\"show\");trigger.setAttribute(\"aria-expanded\",target.classList.contains(\"show\"));trigger.textContent=target.classList.contains(\"show\")?\"▾\":\"▸\";});})();";
+        private const string BootstrapJs = "(()=>{document.addEventListener(\"click\",event=>{const trigger=event.target.closest(\"[data-bs-toggle='collapse']\");if(!trigger)return;const target=document.querySelector(trigger.getAttribute(\"data-bs-target\"));if(!target)return;target.classList.toggle(\"show\");trigger.setAttribute(\"aria-expanded\",target.classList.contains(\"show\"));trigger.textContent=target.classList.contains(\"show\")?\"-\":\"+\";});})();";
 
-        private const string ReportCss = ".report-header{display:flex;align-items:flex-end;justify-content:space-between}.summary-grid,.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem}.summary-grid>div,.file-grid>div{background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:.85rem}.summary-grid span,.file-grid span{display:block;color:#6c757d;font-size:.78rem;text-transform:uppercase}.summary-grid strong{font-size:1.4rem}.toolbar{background:rgba(248,249,250,.95);border-bottom:1px solid var(--bs-border-color)}.diff-list{display:flex;flex-direction:column;gap:.65rem}.diff-node{margin-left:calc(var(--depth)*1rem)}.diff-row{display:flex;gap:.5rem;background:#fff;border:1px solid var(--bs-border-color);border-left:4px solid #0d6efd;border-radius:8px;padding:.75rem}.diff-node.left-only>.diff-row{border-left-color:#dc3545}.diff-node.right-only>.diff-row{border-left-color:#198754}.toggle,.toggle-spacer{width:1.75rem;height:1.75rem;flex:0 0 1.75rem}.toggle{border:1px solid var(--bs-border-color);border-radius:6px;background:#fff;cursor:pointer}.toggle-spacer{display:inline-block}.diff-main{min-width:0;flex:1}.diff-title{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}.diff-values{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.value-pane{min-width:0;border:1px solid var(--bs-border-color);border-radius:6px;overflow:hidden;background:#fbfbfc}.value-pane span{display:block;padding:.35rem .5rem;font-size:.75rem;font-weight:700;color:#6c757d;border-bottom:1px solid var(--bs-border-color)}.value-pane pre{margin:0;padding:.6rem;min-height:2.4rem;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Cascadia Mono,Consolas,monospace}.diff-children{margin-top:.6rem;display:flex;flex-direction:column;gap:.6rem}.is-hidden-by-filter{display:none}@media(max-width:720px){.diff-values{grid-template-columns:1fr}.diff-node{margin-left:0}.toolbar .btn{margin-top:.5rem}}";
+        private const string ReportCss = ".report-header{display:flex;align-items:flex-end;justify-content:space-between}.summary-grid,.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem}.summary-grid>div,.file-grid>div{background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:.85rem}.summary-grid span,.file-grid span{display:block;color:#6c757d;font-size:.78rem;text-transform:uppercase}.summary-grid strong{font-size:1.4rem}.toolbar{background:rgba(248,249,250,.95);border-bottom:1px solid var(--bs-border-color)}.diff-list{display:flex;flex-direction:column;gap:.65rem}.diff-node{margin-left:calc(var(--depth)*1rem)}.diff-row{display:flex;gap:.5rem;background:#fff;border:1px solid var(--bs-border-color);border-left:4px solid #0d6efd;border-radius:8px;padding:.75rem}.diff-node.left-only>.diff-row{border-left-color:#dc3545}.diff-node.right-only>.diff-row{border-left-color:#198754}.toggle,.toggle-spacer{width:1.75rem;height:1.75rem;flex:0 0 1.75rem}.toggle{border:1px solid var(--bs-border-color);border-radius:6px;background:#fff;cursor:pointer}.toggle-spacer{display:inline-block}.diff-main{min-width:0;flex:1}.diff-title{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}.diff-title.mb-0{margin-bottom:0}.diff-values{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.value-pane{min-width:0;border:1px solid var(--bs-border-color);border-radius:6px;overflow:hidden;background:#fbfbfc}.value-pane span{display:block;padding:.35rem .5rem;font-size:.75rem;font-weight:700;color:#6c757d;border-bottom:1px solid var(--bs-border-color)}.value-pane pre{margin:0;padding:.6rem;min-height:2.4rem;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Cascadia Mono,Consolas,monospace}.diff-children{margin-top:.6rem;display:flex;flex-direction:column;gap:.6rem}.is-hidden-by-filter{display:none}@media(max-width:720px){.diff-values{grid-template-columns:1fr}.diff-node{margin-left:0}.toolbar .btn{margin-top:.5rem}}";
 
-        private const string ReportJs = "(()=>{const filters=document.querySelectorAll(\".diff-filter\");const nodes=[...document.querySelectorAll(\".diff-node\")];function applyFilters(){const showLeft=document.querySelector(\"[data-filter='left-only']\").checked;const showRight=document.querySelector(\"[data-filter='right-only']\").checked;for(const node of nodes){const side=node.dataset.side;node.classList.toggle(\"is-hidden-by-filter\",(side===\"left-only\"&&!showLeft)||(side===\"right-only\"&&!showRight));}}for(const filter of filters)filter.addEventListener(\"change\",applyFilters);document.addEventListener(\"click\",event=>{const action=event.target.closest(\"[data-action]\")?.dataset.action;if(!action)return;const show=action===\"expand\";for(const collapse of document.querySelectorAll(\".collapse\"))collapse.classList.toggle(\"show\",show);for(const toggle of document.querySelectorAll(\".toggle\")){toggle.setAttribute(\"aria-expanded\",show);toggle.textContent=show?\"▾\":\"▸\";}});applyFilters();})();";
+        private const string ReportJs = "(()=>{const filters=document.querySelectorAll(\".diff-filter\");const nodes=[...document.querySelectorAll(\".diff-node\")];function applyFilters(){const showLeft=document.querySelector(\"[data-filter='left-only']\").checked;const showRight=document.querySelector(\"[data-filter='right-only']\").checked;for(const node of nodes){const side=node.dataset.side;node.classList.toggle(\"is-hidden-by-filter\",(side===\"left-only\"&&!showLeft)||(side===\"right-only\"&&!showRight));}}for(const filter of filters)filter.addEventListener(\"change\",applyFilters);document.addEventListener(\"click\",event=>{const action=event.target.closest(\"[data-action]\")?.dataset.action;if(!action)return;const show=action===\"expand\";for(const collapse of document.querySelectorAll(\".collapse\"))collapse.classList.toggle(\"show\",show);for(const toggle of document.querySelectorAll(\".toggle\")){toggle.setAttribute(\"aria-expanded\",show);toggle.textContent=show?\"-\":\"+\";}});applyFilters();})();";
     }
 }

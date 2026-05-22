@@ -1,0 +1,197 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XML Diff Report</title>
+  <link rel="stylesheet" href="file:///C:/Users/akito/AppData/Roaming/XmlDiffTool/ReportAssets/bootstrap.min.css">
+  <link rel="stylesheet" href="file:///C:/Users/akito/AppData/Roaming/XmlDiffTool/ReportAssets/xml-diff-report.css">
+</head>
+<body>
+  <main class="container-fluid py-4">
+    <header class="report-header mb-3">
+      <div>
+        <h1>XML Diff Report</h1>
+        <div class="text-muted small">Generated 2026-05-22 16:17:17 · Ignore case: Yes · List order ignored</div>
+      </div>
+    </header>
+    <section class="summary-grid mb-3">
+      <div><span>Total differences</span><strong>12</strong></div>
+      <div><span>Left only</span><strong>3</strong></div>
+      <div><span>Right only</span><strong>3</strong></div>
+    </section>
+    <section class="file-grid mb-3">
+      <div><span>Left XML</span><code>D:\Work\Projects\XmlDiffTool\Samples\left-sample.xml</code></div>
+      <div><span>Right XML</span><code>D:\Work\Projects\XmlDiffTool\Samples\right-sample.xml</code></div>
+    </section>
+    <section class="toolbar sticky-top py-2 mb-3">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input diff-filter" type="checkbox" id="showLeftOnly" data-filter="left-only" checked>
+        <label class="form-check-label" for="showLeftOnly">Show left only element</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input diff-filter" type="checkbox" id="showRightOnly" data-filter="right-only" checked>
+        <label class="form-check-label" for="showRightOnly">Show right only element</label>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-action="expand">Expand all</button>
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-action="collapse">Collapse all</button>
+    </section>
+    <section class="diff-list">
+      <article class="diff-node changed element" data-side="changed" style="--depth:0">
+        <div class="diff-row">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-39ee4707723d49e6b2fcea8af461cd2a" aria-expanded="true" aria-controls="node-39ee4707723d49e6b2fcea8af461cd2a">▾</button>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Element</span><code>Order</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre></pre></div>
+              <div class="value-pane right"><span>Right</span><pre></pre></div>
+            </div>
+          </div>
+        </div>
+        <div id="node-39ee4707723d49e6b2fcea8af461cd2a" class="collapse show diff-children">
+      <article class="diff-node changed element" data-side="changed" style="--depth:1">
+        <div class="diff-row">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-1ed0d676f62e4e8397157c54ca7f1ba1" aria-expanded="true" aria-controls="node-1ed0d676f62e4e8397157c54ca7f1ba1">▾</button>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Element</span><code>Order/Customer</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre></pre></div>
+              <div class="value-pane right"><span>Right</span><pre></pre></div>
+            </div>
+          </div>
+        </div>
+        <div id="node-1ed0d676f62e4e8397157c54ca7f1ba1" class="collapse show diff-children">
+      <article class="diff-node left-only attribute" data-side="left-only" style="--depth:2">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Customer[@leftOnlyAttribute]</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>left-attribute-value</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>(missing)</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="diff-node right-only attribute" data-side="right-only" style="--depth:2">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Customer[@rightOnlyAttribute]</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>(missing)</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>right-attribute-value</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+        </div>
+      </article>
+      <article class="diff-node left-only element" data-side="left-only" style="--depth:1">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Element</span><code>Order/LeftOnlyTag</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>1 child element(s), 0 attribute(s)</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>(missing)</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="diff-node right-only element" data-side="right-only" style="--depth:1">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Element</span><code>Order/RightOnlyTag</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>(missing)</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>1 child element(s), 0 attribute(s)</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="diff-node changed element" data-side="changed" style="--depth:1">
+        <div class="diff-row">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-a1d88d081bc24a809f4e2556392b5cd1" aria-expanded="true" aria-controls="node-a1d88d081bc24a809f4e2556392b5cd1">▾</button>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Element</span><code>Order/SharedDifferentAttribute</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre></pre></div>
+              <div class="value-pane right"><span>Right</span><pre></pre></div>
+            </div>
+          </div>
+        </div>
+        <div id="node-a1d88d081bc24a809f4e2556392b5cd1" class="collapse show diff-children">
+      <article class="diff-node left-only attribute" data-side="left-only" style="--depth:2">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/SharedDifferentAttribute[@leftFlag]</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>enabled</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>(missing)</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="diff-node right-only attribute" data-side="right-only" style="--depth:2">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/SharedDifferentAttribute[@rightFlag]</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>(missing)</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>enabled</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+        </div>
+      </article>
+      <article class="diff-node changed element" data-side="changed" style="--depth:1">
+        <div class="diff-row">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-34cd1da3b5e347fe91075f36429a0ecb" aria-expanded="true" aria-controls="node-34cd1da3b5e347fe91075f36429a0ecb">▾</button>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Element</span><code>Order/Shipping</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre></pre></div>
+              <div class="value-pane right"><span>Right</span><pre></pre></div>
+            </div>
+          </div>
+        </div>
+        <div id="node-34cd1da3b5e347fe91075f36429a0ecb" class="collapse show diff-children">
+      <article class="diff-node changed attribute" data-side="changed" style="--depth:2">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Shipping[@carrier]</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>DHL</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>FedEx</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="diff-node changed attribute" data-side="changed" style="--depth:2">
+        <div class="diff-row">
+          <span class="toggle-spacer"></span>
+          <div class="diff-main">
+            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Shipping[@method]</code></div>
+            <div class="diff-values">
+              <div class="value-pane left"><span>Left</span><pre>Air</pre></div>
+              <div class="value-pane right"><span>Right</span><pre>Ground</pre></div>
+            </div>
+          </div>
+        </div>
+      </article>
+        </div>
+      </article>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script src="file:///C:/Users/akito/AppData/Roaming/XmlDiffTool/ReportAssets/bootstrap.bundle.min.js"></script>
+  <script src="file:///C:/Users/akito/AppData/Roaming/XmlDiffTool/ReportAssets/xml-diff-report.js"></script>
+</body>
+</html>
