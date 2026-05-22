@@ -148,7 +148,7 @@ namespace XmlDiffTool
             var dialog = new SaveFileDialog
             {
                 Filter = "HTML Report (*.html)|*.html",
-                FileName = $"XmlDiffReport_{DateTime.Now:yyyyMMdd_HHmmss}.html"
+                FileName = BuildReportFileName(_leftFilePath!, _rightFilePath!)
             };
 
             if (dialog.ShowDialog() != true)
@@ -195,6 +195,23 @@ namespace XmlDiffTool
         private static int CountNodes(System.Collections.Generic.IEnumerable<Models.XmlDifferenceNode> nodes)
         {
             return nodes.Sum(node => 1 + CountNodes(node.Children));
+        }
+
+        private static string BuildReportFileName(string leftFilePath, string rightFilePath)
+        {
+            var leftName = SanitizeFileName(Path.GetFileNameWithoutExtension(leftFilePath));
+            var rightName = SanitizeFileName(Path.GetFileNameWithoutExtension(rightFilePath));
+            return $"{leftName}_{rightName}_diff.html";
+        }
+
+        private static string SanitizeFileName(string value)
+        {
+            foreach (var invalidChar in Path.GetInvalidFileNameChars())
+            {
+                value = value.Replace(invalidChar, '_');
+            }
+
+            return string.IsNullOrWhiteSpace(value) ? "xml" : value;
         }
 
         private void RaiseCommandStates()
