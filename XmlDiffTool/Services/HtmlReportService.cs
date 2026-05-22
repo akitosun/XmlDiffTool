@@ -35,7 +35,7 @@ namespace XmlDiffTool.Services
 
         private string BuildHtml(IReadOnlyCollection<XmlDifferenceNode> roots, string? leftFilePath, string? rightFilePath, bool ignoreCase)
         {
-            var total = CountNodes(roots);
+            var total = CountDifferenceRows(roots);
             var leftOnly = CountNodes(roots, node => node.IsRightMissing);
             var rightOnly = CountNodes(roots, node => node.IsLeftMissing);
             var generatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -89,7 +89,7 @@ namespace XmlDiffTool.Services
             {
                 foreach (var root in roots)
                 {
-                    AppendNode(builder, root, 0);
+                    AppendNode(builder, root, 0, leftFilePath, rightFilePath);
                 }
             }
 
@@ -102,18 +102,19 @@ namespace XmlDiffTool.Services
             return builder.ToString();
         }
 
-        private static void AppendNode(StringBuilder builder, XmlDifferenceNode node, int depth)
+        private static void AppendNode(StringBuilder builder, XmlDifferenceNode node, int depth, string? leftFilePath, string? rightFilePath)
         {
             var id = $"node-{Guid.NewGuid():N}";
             var sideClass = node.IsLeftMissing ? "right-only" : node.IsRightMissing ? "left-only" : "changed";
             var kindClass = node.Kind.ToString().ToLowerInvariant();
             var hasChildren = node.Children.Count > 0;
-            var hasVisibleValues = ShouldShowValues(node);
-            var containerClass = hasChildren ? "has-children" : "leaf";
+            var directRows = node.Children.Where(child => !child.HasChildren).ToList();
+            var childSections = node.Children.Where(child => child.HasChildren).ToList();
+            var differenceCount = CountDifferenceRows(new[] { node });
             var indent = Math.Min(depth, 8);
 
-            builder.AppendLine($"      <article class=\"diff-node {sideClass} {kindClass} {containerClass}\" data-side=\"{sideClass}\" style=\"--depth:{indent}\">");
-            builder.AppendLine("        <div class=\"diff-row\">");
+            builder.AppendLine($"      <article class=\"diff-section {sideClass} {kindClass}\" data-side=\"{sideClass}\" style=\"--depth:{indent}\">");
+            builder.AppendLine("        <div class=\"section-heading\">");
 
             if (hasChildren)
             {
@@ -124,32 +125,111 @@ namespace XmlDiffTool.Services
                 builder.AppendLine("          <span class=\"toggle-spacer\"></span>");
             }
 
-            builder.AppendLine("          <div class=\"diff-main\">");
-            builder.AppendLine($"            <div class=\"diff-title{(hasVisibleValues ? string.Empty : " mb-0")}\"><span class=\"badge text-bg-light\">{Encode(node.Kind.ToString())}</span><code>{Encode(node.Path)}</code></div>");
-
-            if (hasVisibleValues)
-            {
-                builder.AppendLine("            <div class=\"diff-values\">");
-                builder.AppendLine($"              <div class=\"value-pane left\"><span>Left</span><pre>{Encode(DisplayValue(node.LeftValue, node.IsLeftMissing))}</pre></div>");
-                builder.AppendLine($"              <div class=\"value-pane right\"><span>Right</span><pre>{Encode(DisplayValue(node.RightValue, node.IsRightMissing))}</pre></div>");
-                builder.AppendLine("            </div>");
-            }
-
-            builder.AppendLine("          </div>");
+            builder.AppendLine($"          <h2>{Encode(node.Path)}</h2>");
+            builder.AppendLine($"          <span class=\"count-badge\">{differenceCount}</span>");
             builder.AppendLine("        </div>");
 
             if (hasChildren)
             {
-                builder.AppendLine($"        <div id=\"{id}\" class=\"collapse show diff-children\">");
-                foreach (var child in node.Children)
-                {
-                    AppendNode(builder, child, depth + 1);
-                }
+                builder.AppendLine($"        <div id=\"{id}\" class=\"collapse show section-body\">");
+            }
 
+            if (directRows.Count > 0 || !hasChildren)
+            {
+                AppendDifferenceTable(builder, node, directRows.Count > 0 ? directRows : new List<XmlDifferenceNode> { node }, leftFilePath, rightFilePath);
+            }
+
+            foreach (var childSection in childSections)
+            {
+                AppendNode(builder, childSection, depth + 1, leftFilePath, rightFilePath);
+            }
+
+            if (hasChildren)
+            {
                 builder.AppendLine("        </div>");
             }
 
             builder.AppendLine("      </article>");
+        }
+
+        private static void AppendDifferenceTable(StringBuilder builder, XmlDifferenceNode owner, IReadOnlyCollection<XmlDifferenceNode> rows, string? leftFilePath, string? rightFilePath)
+        {
+            builder.AppendLine("          <table class=\"diff-table\">");
+            builder.AppendLine("            <thead>");
+            builder.AppendLine("              <tr>");
+            builder.AppendLine("                <th>Property</th>");
+            builder.AppendLine($"                <th class=\"left-head\">{Encode(GetFileLabel(leftFilePath, "Left"))}</th>");
+            builder.AppendLine($"                <th class=\"right-head\">{Encode(GetFileLabel(rightFilePath, "Right"))}</th>");
+            builder.AppendLine("              </tr>");
+            builder.AppendLine("            </thead>");
+            builder.AppendLine("            <tbody>");
+
+            foreach (var row in rows)
+            {
+                var sideClass = row.IsLeftMissing ? "right-only" : row.IsRightMissing ? "left-only" : "changed";
+                builder.AppendLine($"              <tr class=\"{sideClass}\" data-side=\"{sideClass}\">");
+                builder.AppendLine($"                <td class=\"property-name\">{BuildPropertyLabel(owner, row)}</td>");
+                builder.AppendLine($"                <td class=\"left-value\"><pre>{Encode(DisplayValue(row.LeftValue, row.IsLeftMissing))}</pre></td>");
+                builder.AppendLine($"                <td class=\"right-value\"><pre>{Encode(DisplayValue(row.RightValue, row.IsRightMissing))}</pre></td>");
+                builder.AppendLine("              </tr>");
+            }
+
+            builder.AppendLine("            </tbody>");
+            builder.AppendLine("          </table>");
+        }
+
+        private static string BuildPropertyLabel(XmlDifferenceNode owner, XmlDifferenceNode row)
+        {
+            var propertyName = Encode(GetPropertyName(owner, row));
+            var note = GetOnlySideNote(row);
+            return string.IsNullOrEmpty(note)
+                ? propertyName
+                : $"{propertyName} <span class=\"side-note\">{Encode(note)}</span>";
+        }
+
+        private static string GetPropertyName(XmlDifferenceNode owner, XmlDifferenceNode row)
+        {
+            if (row.Kind == XmlDifferenceKind.Attribute)
+            {
+                return row.Name.TrimStart('@');
+            }
+
+            if (row.Kind == XmlDifferenceKind.Value)
+            {
+                return "Value";
+            }
+
+            if (row.Path.StartsWith(owner.Path + "/", StringComparison.Ordinal))
+            {
+                return row.Path[(owner.Path.Length + 1)..];
+            }
+
+            return row.Name;
+        }
+
+        private static string GetOnlySideNote(XmlDifferenceNode row)
+        {
+            if (row.IsRightMissing)
+            {
+                return "(left only)";
+            }
+
+            if (row.IsLeftMissing)
+            {
+                return "(right only)";
+            }
+
+            return string.Empty;
+        }
+
+        private static string GetFileLabel(string? filePath, string fallback)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                return fallback;
+            }
+
+            return Path.GetFileName(filePath);
         }
 
         private static string DisplayValue(string? value, bool isMissing)
@@ -157,22 +237,14 @@ namespace XmlDiffTool.Services
             return isMissing ? "(missing)" : value ?? string.Empty;
         }
 
-        private static bool ShouldShowValues(XmlDifferenceNode node)
-        {
-            if (node.Kind == XmlDifferenceKind.Element && node.HasChildren)
-            {
-                return false;
-            }
-
-            return node.IsLeftMissing
-                || node.IsRightMissing
-                || !string.IsNullOrEmpty(node.LeftValue)
-                || !string.IsNullOrEmpty(node.RightValue);
-        }
-
         private static int CountNodes(IEnumerable<XmlDifferenceNode> nodes)
         {
             return nodes.Sum(node => 1 + CountNodes(node.Children));
+        }
+
+        private static int CountDifferenceRows(IEnumerable<XmlDifferenceNode> nodes)
+        {
+            return nodes.Sum(node => node.Children.Count == 0 ? 1 : CountDifferenceRows(node.Children));
         }
 
         private static int CountNodes(IEnumerable<XmlDifferenceNode> nodes, Func<XmlDifferenceNode, bool> predicate)
@@ -201,8 +273,8 @@ namespace XmlDiffTool.Services
 
         private const string BootstrapJs = "(()=>{document.addEventListener(\"click\",event=>{const trigger=event.target.closest(\"[data-bs-toggle='collapse']\");if(!trigger)return;const target=document.querySelector(trigger.getAttribute(\"data-bs-target\"));if(!target)return;target.classList.toggle(\"show\");trigger.setAttribute(\"aria-expanded\",target.classList.contains(\"show\"));trigger.textContent=target.classList.contains(\"show\")?\"-\":\"+\";});})();";
 
-        private const string ReportCss = ".report-header{display:flex;align-items:flex-end;justify-content:space-between}.summary-grid,.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem}.summary-grid>div,.file-grid>div{background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:.85rem}.summary-grid span,.file-grid span{display:block;color:#6c757d;font-size:.78rem;text-transform:uppercase}.summary-grid strong{font-size:1.4rem}.toolbar{background:rgba(248,249,250,.95);border-bottom:1px solid var(--bs-border-color)}.diff-list{display:flex;flex-direction:column;gap:.75rem}.diff-node{margin-left:calc(var(--depth)*1rem)}.diff-node.has-children{background:#fff;border:1px solid var(--bs-border-color);border-left:4px solid #0d6efd;border-radius:8px;padding:.75rem}.diff-node.has-children.left-only{border-left-color:#dc3545}.diff-node.has-children.right-only{border-left-color:#198754}.diff-node.leaf>.diff-row{background:#fff;border:1px solid var(--bs-border-color);border-left:4px solid #0d6efd;border-radius:8px;padding:.75rem}.diff-node.leaf.left-only>.diff-row{border-left-color:#dc3545}.diff-node.leaf.right-only>.diff-row{border-left-color:#198754}.diff-node.has-children>.diff-row{background:transparent;border:0;border-radius:0;padding:0}.diff-row{display:flex;gap:.5rem}.toggle,.toggle-spacer{width:1.75rem;height:1.75rem;flex:0 0 1.75rem}.toggle{border:1px solid var(--bs-border-color);border-radius:6px;background:#fff;cursor:pointer}.toggle-spacer{display:inline-block}.diff-main{min-width:0;flex:1}.diff-title{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}.diff-title.mb-0{margin-bottom:0}.diff-values{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.value-pane{min-width:0;border:1px solid var(--bs-border-color);border-radius:6px;overflow:hidden;background:#fbfbfc}.value-pane span{display:block;padding:.35rem .5rem;font-size:.75rem;font-weight:700;color:#6c757d;border-bottom:1px solid var(--bs-border-color)}.value-pane pre{margin:0;padding:.6rem;min-height:2.4rem;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Cascadia Mono,Consolas,monospace}.diff-children{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--bs-border-color);display:flex;flex-direction:column;gap:.6rem}.is-hidden-by-filter{display:none}@media(max-width:720px){.diff-values{grid-template-columns:1fr}.diff-node{margin-left:0}.toolbar .btn{margin-top:.5rem}}";
+        private const string ReportCss = ".report-header{display:flex;align-items:flex-end;justify-content:space-between}.summary-grid,.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem}.summary-grid>div,.file-grid>div{background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:.85rem}.summary-grid span,.file-grid span{display:block;color:#6c757d;font-size:.78rem;text-transform:uppercase}.summary-grid strong{font-size:1.4rem}.toolbar{background:rgba(248,249,250,.97);border-bottom:1px solid var(--bs-border-color);box-shadow:0 2px 8px rgba(0,0,0,.06)}.diff-list{display:flex;flex-direction:column;gap:.9rem}.diff-section{margin-left:calc(var(--depth)*1rem);background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05)}.section-heading{display:flex;align-items:center;gap:.65rem;border-bottom:2px solid #dbe7f3;padding-bottom:.75rem;margin-bottom:1rem}.section-heading h2{margin:0;color:#0d2f5f;font-size:1.2rem;font-weight:700}.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.65rem;height:1.65rem;padding:0 .5rem;border-radius:999px;background:#bfe4ff;color:#0d4e85;font-weight:700}.toggle,.toggle-spacer{width:1.75rem;height:1.75rem;flex:0 0 1.75rem}.toggle{border:1px solid var(--bs-border-color);border-radius:6px;background:#fff;cursor:pointer}.toggle-spacer{display:inline-block}.section-body{display:flex;flex-direction:column;gap:.85rem}.diff-table{width:100%;border-collapse:collapse;table-layout:fixed}.diff-table th{position:sticky;top:3rem;z-index:5;background:#eaf1f7;color:#23384f;text-align:left;font-weight:600;padding:.75rem;border-bottom:1px solid #cbd8e6}.diff-table th:first-child{width:18%}.diff-table td{padding:.75rem;border-bottom:1px solid #d9e1ea;vertical-align:top}.property-name{background:#fff;color:#0b223f;font-weight:600}.side-note{color:#d00000;font-size:.86rem;font-weight:700;white-space:nowrap}.left-value{background:#ffd6d6;color:#b00020}.right-value{background:#c9f7d8;color:#005c2f}.left-head{background:#eef3f8}.right-head{background:#eef3f8}.diff-table pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Cascadia Mono,Consolas,monospace}.is-hidden-by-filter{display:none}@media(max-width:720px){.diff-section{margin-left:0;padding:.75rem}.diff-table{table-layout:auto}.diff-table th{top:4.25rem}.diff-table th:first-child{width:auto}.toolbar .btn{margin-top:.5rem}}";
 
-        private const string ReportJs = "(()=>{const filters=document.querySelectorAll(\".diff-filter\");const nodes=[...document.querySelectorAll(\".diff-node\")];function applyFilters(){const showLeft=document.querySelector(\"[data-filter='left-only']\").checked;const showRight=document.querySelector(\"[data-filter='right-only']\").checked;for(const node of nodes){const side=node.dataset.side;node.classList.toggle(\"is-hidden-by-filter\",(side===\"left-only\"&&!showLeft)||(side===\"right-only\"&&!showRight));}}for(const filter of filters)filter.addEventListener(\"change\",applyFilters);document.addEventListener(\"click\",event=>{const action=event.target.closest(\"[data-action]\")?.dataset.action;if(!action)return;const show=action===\"expand\";for(const collapse of document.querySelectorAll(\".collapse\"))collapse.classList.toggle(\"show\",show);for(const toggle of document.querySelectorAll(\".toggle\")){toggle.setAttribute(\"aria-expanded\",show);toggle.textContent=show?\"-\":\"+\";}});applyFilters();})();";
+        private const string ReportJs = "(()=>{const filters=document.querySelectorAll(\".diff-filter\");const nodes=[...document.querySelectorAll(\".diff-section,tr[data-side]\")];function applyFilters(){const showLeft=document.querySelector(\"[data-filter='left-only']\").checked;const showRight=document.querySelector(\"[data-filter='right-only']\").checked;for(const node of nodes){const side=node.dataset.side;node.classList.toggle(\"is-hidden-by-filter\",(side===\"left-only\"&&!showLeft)||(side===\"right-only\"&&!showRight));}}for(const filter of filters)filter.addEventListener(\"change\",applyFilters);document.addEventListener(\"click\",event=>{const action=event.target.closest(\"[data-action]\")?.dataset.action;if(!action)return;const show=action===\"expand\";for(const collapse of document.querySelectorAll(\".collapse\"))collapse.classList.toggle(\"show\",show);for(const toggle of document.querySelectorAll(\".toggle\")){toggle.setAttribute(\"aria-expanded\",show);toggle.textContent=show?\"-\":\"+\";}});applyFilters();})();";
     }
 }

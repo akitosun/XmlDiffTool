@@ -12,11 +12,11 @@
     <header class="report-header mb-3">
       <div>
         <h1>XML Diff Report</h1>
-        <div class="text-muted small">Generated 2026-05-22 16:41:41 &middot; Ignore case: Yes &middot; List order ignored</div>
+        <div class="text-muted small">Generated 2026-05-22 17:13:16 &middot; Ignore case: Yes &middot; List order ignored</div>
       </div>
     </header>
     <section class="summary-grid mb-3">
-      <div><span>Total differences</span><strong>16</strong></div>
+      <div><span>Total differences</span><strong>8</strong></div>
       <div><span>Left only</span><strong>5</strong></div>
       <div><span>Right only</span><strong>5</strong></div>
     </section>
@@ -37,178 +37,169 @@
       <button class="btn btn-sm btn-outline-secondary" type="button" data-action="collapse">Collapse all</button>
     </section>
     <section class="diff-list">
-      <article class="diff-node changed element has-children" data-side="changed" style="--depth:0">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-aa056a7625d141e39eb1b25e3265dca3" aria-expanded="true" aria-controls="node-aa056a7625d141e39eb1b25e3265dca3">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order</code></div>
-          </div>
+      <article class="diff-section changed element" data-side="changed" style="--depth:0">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-7a4811ff7bae4d28bcfb30454447d392" aria-expanded="true" aria-controls="node-7a4811ff7bae4d28bcfb30454447d392">-</button>
+          <h2>Order</h2>
+          <span class="count-badge">8</span>
         </div>
-        <div id="node-aa056a7625d141e39eb1b25e3265dca3" class="collapse show diff-children">
-      <article class="diff-node changed element has-children" data-side="changed" style="--depth:1">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-f0e1a710505645068d0c0657208e3855" aria-expanded="true" aria-controls="node-f0e1a710505645068d0c0657208e3855">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order/Customer</code></div>
-          </div>
+        <div id="node-7a4811ff7bae4d28bcfb30454447d392" class="collapse show section-body">
+      <article class="diff-section changed element" data-side="changed" style="--depth:1">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-be47105892ea448b9bbd08646b972138" aria-expanded="true" aria-controls="node-be47105892ea448b9bbd08646b972138">-</button>
+          <h2>Order/Customer</h2>
+          <span class="count-badge">2</span>
         </div>
-        <div id="node-f0e1a710505645068d0c0657208e3855" class="collapse show diff-children">
-      <article class="diff-node left-only attribute leaf" data-side="left-only" style="--depth:2">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Customer[@leftOnlyAttribute]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>left-attribute-value</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>(missing)</pre></div>
-            </div>
-          </div>
-        </div>
-      </article>
-      <article class="diff-node right-only attribute leaf" data-side="right-only" style="--depth:2">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Customer[@rightOnlyAttribute]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>(missing)</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>right-attribute-value</pre></div>
-            </div>
-          </div>
+        <div id="node-be47105892ea448b9bbd08646b972138" class="collapse show section-body">
+          <table class="diff-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th class="left-head">left-sample.xml</th>
+                <th class="right-head">right-sample.xml</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="left-only" data-side="left-only">
+                <td class="property-name">leftOnlyAttribute <span class="side-note">(left only)</span></td>
+                <td class="left-value"><pre>left-attribute-value</pre></td>
+                <td class="right-value"><pre>(missing)</pre></td>
+              </tr>
+              <tr class="right-only" data-side="right-only">
+                <td class="property-name">rightOnlyAttribute <span class="side-note">(right only)</span></td>
+                <td class="left-value"><pre>(missing)</pre></td>
+                <td class="right-value"><pre>right-attribute-value</pre></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </article>
+      <article class="diff-section left-only element" data-side="left-only" style="--depth:1">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-ebe7967cf7b4405d8408c5f4904a029f" aria-expanded="true" aria-controls="node-ebe7967cf7b4405d8408c5f4904a029f">-</button>
+          <h2>Order/LeftOnlyTag</h2>
+          <span class="count-badge">1</span>
         </div>
-      </article>
-      <article class="diff-node left-only element has-children" data-side="left-only" style="--depth:1">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-1a2f603ac2d343489467286a50b6201f" aria-expanded="true" aria-controls="node-1a2f603ac2d343489467286a50b6201f">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order/LeftOnlyTag</code></div>
-          </div>
+        <div id="node-ebe7967cf7b4405d8408c5f4904a029f" class="collapse show section-body">
+      <article class="diff-section left-only element" data-side="left-only" style="--depth:2">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-def0352696564ef0979dee7fb498fb7f" aria-expanded="true" aria-controls="node-def0352696564ef0979dee7fb498fb7f">-</button>
+          <h2>Order/LeftOnlyTag/Reason</h2>
+          <span class="count-badge">1</span>
         </div>
-        <div id="node-1a2f603ac2d343489467286a50b6201f" class="collapse show diff-children">
-      <article class="diff-node left-only element has-children" data-side="left-only" style="--depth:2">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-4192b3510dc54415a8c29420a09fac38" aria-expanded="true" aria-controls="node-4192b3510dc54415a8c29420a09fac38">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order/LeftOnlyTag/Reason</code></div>
-          </div>
-        </div>
-        <div id="node-4192b3510dc54415a8c29420a09fac38" class="collapse show diff-children">
-      <article class="diff-node left-only value leaf" data-side="left-only" style="--depth:3">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Value</span><code>Order/LeftOnlyTag/Reason[#value]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>This tag exists only in left XML.</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>(missing)</pre></div>
-            </div>
-          </div>
-        </div>
-      </article>
+        <div id="node-def0352696564ef0979dee7fb498fb7f" class="collapse show section-body">
+          <table class="diff-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th class="left-head">left-sample.xml</th>
+                <th class="right-head">right-sample.xml</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="left-only" data-side="left-only">
+                <td class="property-name">Value <span class="side-note">(left only)</span></td>
+                <td class="left-value"><pre>This tag exists only in left XML.</pre></td>
+                <td class="right-value"><pre>(missing)</pre></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </article>
         </div>
       </article>
-      <article class="diff-node right-only element has-children" data-side="right-only" style="--depth:1">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-872689d1f5c84651bd2145935c8e0087" aria-expanded="true" aria-controls="node-872689d1f5c84651bd2145935c8e0087">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order/RightOnlyTag</code></div>
-          </div>
+      <article class="diff-section right-only element" data-side="right-only" style="--depth:1">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-d16709e16c6e4d40bcb3c3dd392e1dbc" aria-expanded="true" aria-controls="node-d16709e16c6e4d40bcb3c3dd392e1dbc">-</button>
+          <h2>Order/RightOnlyTag</h2>
+          <span class="count-badge">1</span>
         </div>
-        <div id="node-872689d1f5c84651bd2145935c8e0087" class="collapse show diff-children">
-      <article class="diff-node right-only element has-children" data-side="right-only" style="--depth:2">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-03fe767f985d48a4a59af508269f1d2f" aria-expanded="true" aria-controls="node-03fe767f985d48a4a59af508269f1d2f">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order/RightOnlyTag/Reason</code></div>
-          </div>
+        <div id="node-d16709e16c6e4d40bcb3c3dd392e1dbc" class="collapse show section-body">
+      <article class="diff-section right-only element" data-side="right-only" style="--depth:2">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-8296e7d8394a4e5b9516319c2c0297e0" aria-expanded="true" aria-controls="node-8296e7d8394a4e5b9516319c2c0297e0">-</button>
+          <h2>Order/RightOnlyTag/Reason</h2>
+          <span class="count-badge">1</span>
         </div>
-        <div id="node-03fe767f985d48a4a59af508269f1d2f" class="collapse show diff-children">
-      <article class="diff-node right-only value leaf" data-side="right-only" style="--depth:3">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Value</span><code>Order/RightOnlyTag/Reason[#value]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>(missing)</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>This tag exists only in right XML.</pre></div>
-            </div>
-          </div>
-        </div>
-      </article>
-        </div>
-      </article>
-        </div>
-      </article>
-      <article class="diff-node changed element has-children" data-side="changed" style="--depth:1">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-351a7199f493478b84055365635a0a7d" aria-expanded="true" aria-controls="node-351a7199f493478b84055365635a0a7d">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order/SharedDifferentAttribute</code></div>
-          </div>
-        </div>
-        <div id="node-351a7199f493478b84055365635a0a7d" class="collapse show diff-children">
-      <article class="diff-node left-only attribute leaf" data-side="left-only" style="--depth:2">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/SharedDifferentAttribute[@leftFlag]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>enabled</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>(missing)</pre></div>
-            </div>
-          </div>
-        </div>
-      </article>
-      <article class="diff-node right-only attribute leaf" data-side="right-only" style="--depth:2">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/SharedDifferentAttribute[@rightFlag]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>(missing)</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>enabled</pre></div>
-            </div>
-          </div>
+        <div id="node-8296e7d8394a4e5b9516319c2c0297e0" class="collapse show section-body">
+          <table class="diff-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th class="left-head">left-sample.xml</th>
+                <th class="right-head">right-sample.xml</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="right-only" data-side="right-only">
+                <td class="property-name">Value <span class="side-note">(right only)</span></td>
+                <td class="left-value"><pre>(missing)</pre></td>
+                <td class="right-value"><pre>This tag exists only in right XML.</pre></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </article>
         </div>
       </article>
-      <article class="diff-node changed element has-children" data-side="changed" style="--depth:1">
-        <div class="diff-row">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-55b55ae00d114f08a3839f4b553a6fb4" aria-expanded="true" aria-controls="node-55b55ae00d114f08a3839f4b553a6fb4">-</button>
-          <div class="diff-main">
-            <div class="diff-title mb-0"><span class="badge text-bg-light">Element</span><code>Order/Shipping</code></div>
-          </div>
+      <article class="diff-section changed element" data-side="changed" style="--depth:1">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-3c4207a62bb1492b8252778cf5dd5cde" aria-expanded="true" aria-controls="node-3c4207a62bb1492b8252778cf5dd5cde">-</button>
+          <h2>Order/SharedDifferentAttribute</h2>
+          <span class="count-badge">2</span>
         </div>
-        <div id="node-55b55ae00d114f08a3839f4b553a6fb4" class="collapse show diff-children">
-      <article class="diff-node changed attribute leaf" data-side="changed" style="--depth:2">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Shipping[@carrier]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>DHL</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>FedEx</pre></div>
-            </div>
-          </div>
-        </div>
-      </article>
-      <article class="diff-node changed attribute leaf" data-side="changed" style="--depth:2">
-        <div class="diff-row">
-          <span class="toggle-spacer"></span>
-          <div class="diff-main">
-            <div class="diff-title"><span class="badge text-bg-light">Attribute</span><code>Order/Shipping[@method]</code></div>
-            <div class="diff-values">
-              <div class="value-pane left"><span>Left</span><pre>Air</pre></div>
-              <div class="value-pane right"><span>Right</span><pre>Ground</pre></div>
-            </div>
-          </div>
+        <div id="node-3c4207a62bb1492b8252778cf5dd5cde" class="collapse show section-body">
+          <table class="diff-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th class="left-head">left-sample.xml</th>
+                <th class="right-head">right-sample.xml</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="left-only" data-side="left-only">
+                <td class="property-name">leftFlag <span class="side-note">(left only)</span></td>
+                <td class="left-value"><pre>enabled</pre></td>
+                <td class="right-value"><pre>(missing)</pre></td>
+              </tr>
+              <tr class="right-only" data-side="right-only">
+                <td class="property-name">rightFlag <span class="side-note">(right only)</span></td>
+                <td class="left-value"><pre>(missing)</pre></td>
+                <td class="right-value"><pre>enabled</pre></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </article>
+      <article class="diff-section changed element" data-side="changed" style="--depth:1">
+        <div class="section-heading">
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-53e75eab805f47b5b0a98fc8097432b9" aria-expanded="true" aria-controls="node-53e75eab805f47b5b0a98fc8097432b9">-</button>
+          <h2>Order/Shipping</h2>
+          <span class="count-badge">2</span>
+        </div>
+        <div id="node-53e75eab805f47b5b0a98fc8097432b9" class="collapse show section-body">
+          <table class="diff-table">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th class="left-head">left-sample.xml</th>
+                <th class="right-head">right-sample.xml</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="changed" data-side="changed">
+                <td class="property-name">carrier</td>
+                <td class="left-value"><pre>DHL</pre></td>
+                <td class="right-value"><pre>FedEx</pre></td>
+              </tr>
+              <tr class="changed" data-side="changed">
+                <td class="property-name">method</td>
+                <td class="left-value"><pre>Air</pre></td>
+                <td class="right-value"><pre>Ground</pre></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </article>
         </div>
