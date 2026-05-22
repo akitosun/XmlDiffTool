@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Order id="ORD-1001" status="Open" priority="High">
+  <Customer customerId="C001" tier="Gold" leftOnlyAttribute="left-attribute-value">
+    <Name>AKITO LABS</Name>
+    <Email>Support@Example.com</Email>
+  </Customer>
+  <Items>
+    <Item sku="A-100" quantity="2">
+      <Name>Keyboard</Name>
+      <Price currency="USD">120</Price>
+    </Item>
+    <Item sku="B-200" quantity="1">
+      <Name>Mouse</Name>
+      <Price currency="USD">45</Price>
+    </Item>
+    <Item sku="C-300" quantity="4">
+      <Name>Cable</Name>
+      <Price currency="USD">8</Price>
+    </Item>
+  </Items>
+  <Shipping method="Air" carrier="DHL">
+    <Address country="TW">Taipei City</Address>
+  </Shipping>
+  <LeftOnlyTag>
+    <Reason>This tag exists only in left XML.</Reason>
+  </LeftOnlyTag>
+  <SharedDifferentAttribute leftFlag="enabled">
+    <Value>Same element, different attributes.</Value>
+  </SharedDifferentAttribute>
+  <CaseOnlyValue>HELLO WORLD</CaseOnlyValue>
+</Order>

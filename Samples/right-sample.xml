@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<order id="ord-1001" status="open" priority="high">
+  <customer customerId="c001" tier="gold" rightOnlyAttribute="right-attribute-value">
+    <name>akito labs</name>
+    <email>support@example.com</email>
+  </customer>
+  <items>
+    <item sku="C-300" quantity="4">
+      <name>Cable</name>
+      <price currency="USD">8</price>
+    </item>
+    <item sku="A-100" quantity="2">
+      <name>Keyboard</name>
+      <price currency="USD">120</price>
+    </item>
+    <item sku="B-200" quantity="1">
+      <name>Mouse</name>
+      <price currency="USD">45</price>
+    </item>
+  </items>
+  <shipping method="Ground" carrier="FedEx">
+    <address country="TW">Taipei City</address>
+  </shipping>
+  <RightOnlyTag>
+    <Reason>This tag exists only in right XML.</Reason>
+  </RightOnlyTag>
+  <sharedDifferentAttribute rightFlag="enabled">
+    <value>Same element, different attributes.</value>
+  </sharedDifferentAttribute>
+  <caseOnlyValue>hello world</caseOnlyValue>
+</order>

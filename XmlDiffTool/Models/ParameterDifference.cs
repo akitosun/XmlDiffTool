@@ -4,13 +4,15 @@ namespace XmlDiffTool.Models
 {
     public class ParameterDifference
     {
-        public ParameterDifference(string name, string title, string displayName, string? leftValue, string? rightValue)
+        public ParameterDifference(string name, string title, string displayName, string? leftValue, string? rightValue, bool isLeftMissing = false, bool isRightMissing = false)
         {
             Name = name;
             Title = title;
             DisplayName = displayName;
             LeftValue = leftValue;
             RightValue = rightValue;
+            IsLeftMissing = isLeftMissing;
+            IsRightMissing = isRightMissing;
         }
 
         public string Name { get; }
@@ -23,9 +25,9 @@ namespace XmlDiffTool.Models
 
         public string? RightValue { get; }
 
-        public bool IsLeftMissing => string.IsNullOrWhiteSpace(LeftValue);
+        public bool IsLeftMissing { get; }
 
-        public bool IsRightMissing => string.IsNullOrWhiteSpace(RightValue);
+        public bool IsRightMissing { get; }
 
         public bool HasMissingValue => IsLeftMissing || IsRightMissing;
 

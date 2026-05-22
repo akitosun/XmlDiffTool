@@ -1,13 +1,13 @@
 # XML Diff Tool
 
-XML Diff Tool is a WPF desktop application for Windows that compares the contents of two XML files and highlights any differences. It loads each document into a flattened list of parameter/value pairs, allowing you to quickly spot missing nodes, attribute changes, element text changes, or mismatched values.
+XML Diff Tool is a WPF desktop application for Windows that compares two XML files and exports the differences as a reusable HTML report. It compares XML as a tree, can ignore case, ignores list ordering for matching child elements, and only reports nodes whose attributes, values, or presence differ.
 
 ## Features
 
-- **Side-by-side XML comparison** – Load a left and right XML file and run an asynchronous comparison to detect parameter differences. Missing values are highlighted in red inside the results grid.
-- **Dynamic filtering** – Narrow the results with a free-text filter, limit the view to only parameters whose values differ, or ignore case when comparing values.
-- **Copy parameter names** – Click any row to copy the parameter path to the clipboard and get an in-app toast notification confirming the action.
-- **Excel export** – Export the currently visible differences to an `.xlsx` workbook so the report can be shared. The export uses the Open XML SDK.
+- **Side-by-side XML report** - Load a left and right XML file and generate an asynchronous HTML report for element, attribute, and value differences.
+- **Order-insensitive matching** - Repeated child elements are matched by normalized content, so list ordering does not create false differences.
+- **Report filtering** - The generated HTML report can hide left-only or right-only elements from the report toolbar.
+- **HTML report export** - Save a Bootstrap-styled side-by-side HTML report. Shared CSS and JS assets are written under `%AppData%\XmlDiffTool\ReportAssets` and reused by later reports.
 
 ## Prerequisites
 
@@ -15,10 +15,7 @@ XML Diff Tool is a WPF desktop application for Windows that compares the content
 - [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0) with Windows desktop support
 - (Optional) [Visual Studio 2022](https://visualstudio.microsoft.com/) with the ".NET desktop development" workload for an IDE experience
 
-The project references the following NuGet packages:
-
-- [`DocumentFormat.OpenXml`](https://www.nuget.org/packages/DocumentFormat.OpenXml/) for generating Excel exports.
-- [`Notifications.Wpf`](https://www.nuget.org/packages/Notifications.Wpf/) for toast-style notifications.
+The project uses WPF and the .NET base class libraries; no additional NuGet packages are required.
 
 ## Getting Started
 
@@ -47,20 +44,15 @@ The app launches a WPF window titled **XML Diff Tool**.
 ## Using the Application
 
 1. Click **Browse...** on the left and right sides to choose two XML files.
-2. Select **Compare** to generate the differences report.
-3. Use the filter controls to refine the list:
-   - Enter text in the **Filter** box to match by parameter path.
-   - Enable **Only Show Different Parameter** to hide equal values.
-   - Enable **Ignore Value Case** to treat values case-insensitively.
-4. Review the grid for each parameter, its left value, and its right value. Rows with missing data are highlighted in red.
-5. Click a row to copy its parameter path if you need to reference it elsewhere.
-6. Press **Export** to save the filtered results to Excel.
+2. Enable **Ignore case for tags, attributes, and values** if matching should be case-insensitive.
+3. Press **Generate HTML Report**, choose a save location, and open the generated report when prompted.
+4. Use the report toolbar to show or hide left-only and right-only elements.
 
-The status text at the bottom summarizes the visible differences, including the total count and missing values on each side.
+The WPF window only handles file selection, compare options, and report generation. Difference review happens in the generated HTML report.
 
 ## How It Works
 
-The comparer flattens each XML document by traversing every node, combining element names, indexes, attributes, and leaf-element text values into unique parameter paths. These paths and their values are compared to build the difference list displayed in the UI.
+The comparer loads each XML document as a tree. For repeated child elements with the same name, exact normalized matches are removed first so list ordering is ignored. Remaining elements are compared by attributes, leaf values, and child differences. Nodes whose attributes and values are all equal are not included in the report.
 
 ## License
 
