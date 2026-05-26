@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 using XmlDiffTool.Models;
 
@@ -114,7 +115,7 @@ namespace XmlDiffTool.Services
 
         private static void AddValueDifference(XmlDifferenceNode node, XElement left, XElement right, string path, CompareOptions options)
         {
-            if (left.Elements().Any() || right.Elements().Any())
+            if (GetComparableChildren(left).Any() || GetComparableChildren(right).Any())
             {
                 return;
             }
@@ -136,8 +137,8 @@ namespace XmlDiffTool.Services
 
         private static void AddChildDifferences(XmlDifferenceNode node, XElement left, XElement right, string path, CompareOptions options)
         {
-            var leftChildren = left.Elements().ToList();
-            var rightChildren = right.Elements().ToList();
+            var leftChildren = GetComparableChildren(left);
+            var rightChildren = GetComparableChildren(right);
             if (leftChildren.Count == 0 && rightChildren.Count == 0)
             {
                 return;
@@ -219,7 +220,7 @@ namespace XmlDiffTool.Services
                     isRightMissing));
             }
 
-            var childElements = element.Elements().ToList();
+            var childElements = GetComparableChildren(element);
             if (childElements.Count == 0)
             {
                 var value = NormalizeText(element.Value);
@@ -282,13 +283,14 @@ namespace XmlDiffTool.Services
                 builder.Append(options.NormalizeValue(attribute.Value));
             }
 
-            if (!element.Elements().Any())
+            var childElements = GetComparableChildren(element);
+            if (childElements.Count == 0)
             {
                 builder.Append("|#=");
                 builder.Append(options.NormalizeValue(NormalizeText(element.Value)));
             }
 
-            foreach (var childSignature in element.Elements()
+            foreach (var childSignature in childElements
                          .Select(child => BuildSignature(child, options))
                          .OrderBy(signature => signature, StringComparer.Ordinal))
             {
@@ -298,6 +300,57 @@ namespace XmlDiffTool.Services
             }
 
             return builder.ToString();
+        }
+
+        private static List<XElement> GetComparableChildren(XElement element)
+        {
+            var children = element.Elements().ToList();
+            if (children.Count > 0)
+            {
+                return children;
+            }
+
+            return TryParseEmbeddedXml(NormalizeText(element.Value), out var embeddedChildren)
+                ? embeddedChildren
+                : children;
+        }
+
+        private static bool TryParseEmbeddedXml(string value, out List<XElement> children)
+        {
+            children = new List<XElement>();
+            if (string.IsNullOrWhiteSpace(value) || !value.TrimStart().StartsWith("<", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (TryParseDocument(value, out var document) && document.Root is not null)
+            {
+                children.Add(document.Root);
+                return true;
+            }
+
+            if (TryParseDocument($"<__xml_diff_embedded_root>{value}</__xml_diff_embedded_root>", out document)
+                && document.Root is not null)
+            {
+                children.AddRange(document.Root.Elements());
+                return children.Count > 0;
+            }
+
+            return false;
+        }
+
+        private static bool TryParseDocument(string value, out XDocument document)
+        {
+            try
+            {
+                document = XDocument.Parse(value, LoadOptions.None);
+                return true;
+            }
+            catch (XmlException)
+            {
+                document = new XDocument();
+                return false;
+            }
         }
 
         private static string AppendPath(string parentPath, string name)
