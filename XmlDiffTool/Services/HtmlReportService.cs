@@ -76,6 +76,10 @@ namespace XmlDiffTool.Services
             builder.AppendLine("        <input class=\"form-check-input diff-filter\" type=\"checkbox\" id=\"showRightOnly\" data-filter=\"right-only\" checked>");
             builder.AppendLine("        <label class=\"form-check-label\" for=\"showRightOnly\">Show right only element</label>");
             builder.AppendLine("      </div>");
+            builder.AppendLine("      <div class=\"form-check form-check-inline\">");
+            builder.AppendLine("        <input class=\"form-check-input\" type=\"checkbox\" id=\"showLineNumbers\" data-action=\"line-numbers\" checked>");
+            builder.AppendLine("        <label class=\"form-check-label\" for=\"showLineNumbers\">Show line numbers</label>");
+            builder.AppendLine("      </div>");
             builder.AppendLine("      <button class=\"btn btn-sm btn-outline-secondary\" type=\"button\" data-action=\"expand\">Expand all</button>");
             builder.AppendLine("      <button class=\"btn btn-sm btn-outline-secondary\" type=\"button\" data-action=\"collapse\">Collapse all</button>");
             builder.AppendLine("    </section>");
@@ -169,8 +173,8 @@ namespace XmlDiffTool.Services
                 var sideClass = row.IsLeftMissing ? "right-only" : row.IsRightMissing ? "left-only" : "changed";
                 builder.AppendLine($"              <tr class=\"{sideClass}\" data-side=\"{sideClass}\">");
                 builder.AppendLine($"                <td class=\"property-name\">{BuildPropertyLabel(owner, row)}</td>");
-                builder.AppendLine($"                <td class=\"left-value\"><pre>{Encode(DisplayValue(row.LeftValue, row.IsLeftMissing))}</pre></td>");
-                builder.AppendLine($"                <td class=\"right-value\"><pre>{Encode(DisplayValue(row.RightValue, row.IsRightMissing))}</pre></td>");
+                builder.AppendLine($"                <td class=\"left-value\">{BuildValueCell(row.LeftValue, row.IsLeftMissing, row.LeftLineNumber)}</td>");
+                builder.AppendLine($"                <td class=\"right-value\">{BuildValueCell(row.RightValue, row.IsRightMissing, row.RightLineNumber)}</td>");
                 builder.AppendLine("              </tr>");
             }
 
@@ -185,6 +189,11 @@ namespace XmlDiffTool.Services
             return string.IsNullOrEmpty(note)
                 ? propertyName
                 : $"{propertyName} <span class=\"side-note\">{Encode(note)}</span>";
+        }
+
+        private static string BuildValueCell(string? value, bool isMissing, int? lineNumber)
+        {
+            return $"<div class=\"line-number\">{Encode(DisplayLineNumber(lineNumber, isMissing))}</div><pre>{Encode(DisplayValue(value, isMissing))}</pre>";
         }
 
         private static string GetPropertyName(XmlDifferenceNode owner, XmlDifferenceNode row)
@@ -237,6 +246,16 @@ namespace XmlDiffTool.Services
             return isMissing ? "(missing)" : value ?? string.Empty;
         }
 
+        private static string DisplayLineNumber(int? lineNumber, bool isMissing)
+        {
+            if (isMissing)
+            {
+                return "Line -";
+            }
+
+            return lineNumber is null ? "Line unknown" : $"Line {lineNumber.Value}";
+        }
+
         private static int CountNodes(IEnumerable<XmlDifferenceNode> nodes)
         {
             return nodes.Sum(node => 1 + CountNodes(node.Children));
@@ -273,8 +292,8 @@ namespace XmlDiffTool.Services
 
         private const string BootstrapJs = "(()=>{document.addEventListener(\"click\",event=>{const trigger=event.target.closest(\"[data-bs-toggle='collapse']\");if(!trigger)return;const target=document.querySelector(trigger.getAttribute(\"data-bs-target\"));if(!target)return;target.classList.toggle(\"show\");trigger.setAttribute(\"aria-expanded\",target.classList.contains(\"show\"));trigger.textContent=target.classList.contains(\"show\")?\"-\":\"+\";});})();";
 
-        private const string ReportCss = ".report-header{display:flex;align-items:flex-end;justify-content:space-between}.summary-grid,.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem}.summary-grid>div,.file-grid>div{background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:.85rem}.summary-grid span,.file-grid span{display:block;color:#6c757d;font-size:.78rem;text-transform:uppercase}.summary-grid strong{font-size:1.4rem}.toolbar{background:rgba(248,249,250,.97);border-bottom:1px solid var(--bs-border-color);box-shadow:0 2px 8px rgba(0,0,0,.06)}.diff-list{display:flex;flex-direction:column;gap:.9rem}.diff-section{margin-left:calc(var(--depth)*1rem);background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05)}.section-heading{display:flex;align-items:center;gap:.65rem;border-bottom:2px solid #dbe7f3;padding-bottom:.75rem;margin-bottom:1rem}.section-heading h2{margin:0;color:#0d2f5f;font-size:1.2rem;font-weight:700}.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.65rem;height:1.65rem;padding:0 .5rem;border-radius:999px;background:#bfe4ff;color:#0d4e85;font-weight:700}.toggle,.toggle-spacer{width:1.75rem;height:1.75rem;flex:0 0 1.75rem}.toggle{border:1px solid var(--bs-border-color);border-radius:6px;background:#fff;cursor:pointer}.toggle-spacer{display:inline-block}.section-body{display:flex;flex-direction:column;gap:.85rem}.diff-table{width:100%;border-collapse:collapse;table-layout:fixed}.diff-table th{position:sticky;top:3rem;z-index:5;background:#eaf1f7;color:#23384f;text-align:left;font-weight:600;padding:.75rem;border-bottom:1px solid #cbd8e6}.diff-table th:first-child{width:18%}.diff-table td{padding:.75rem;border-bottom:1px solid #d9e1ea;vertical-align:top}.property-name{background:#fff;color:#0b223f;font-weight:600}.side-note{color:#d00000;font-size:.86rem;font-weight:700;white-space:nowrap}.left-value{background:#ffd6d6;color:#b00020}.right-value{background:#c9f7d8;color:#005c2f}.left-head{background:#eef3f8}.right-head{background:#eef3f8}.diff-table pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Cascadia Mono,Consolas,monospace}.is-hidden-by-filter{display:none}@media(max-width:720px){.diff-section{margin-left:0;padding:.75rem}.diff-table{table-layout:auto}.diff-table th{top:4.25rem}.diff-table th:first-child{width:auto}.toolbar .btn{margin-top:.5rem}}";
+        private const string ReportCss = ".report-header{display:flex;align-items:flex-end;justify-content:space-between}.summary-grid,.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem}.summary-grid>div,.file-grid>div{background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:.85rem}.summary-grid span,.file-grid span{display:block;color:#6c757d;font-size:.78rem;text-transform:uppercase}.summary-grid strong{font-size:1.4rem}.toolbar{background:rgba(248,249,250,.97);border-bottom:1px solid var(--bs-border-color);box-shadow:0 2px 8px rgba(0,0,0,.06)}.diff-list{display:flex;flex-direction:column;gap:.9rem}.diff-section{margin-left:calc(var(--depth)*1rem);background:#fff;border:1px solid var(--bs-border-color);border-radius:8px;padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,.05)}.section-heading{display:flex;align-items:center;gap:.65rem;border-bottom:2px solid #dbe7f3;padding-bottom:.75rem;margin-bottom:1rem}.section-heading h2{margin:0;color:#0d2f5f;font-size:1.2rem;font-weight:700}.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.65rem;height:1.65rem;padding:0 .5rem;border-radius:999px;background:#bfe4ff;color:#0d4e85;font-weight:700}.toggle,.toggle-spacer{width:1.75rem;height:1.75rem;flex:0 0 1.75rem}.toggle{border:1px solid var(--bs-border-color);border-radius:6px;background:#fff;cursor:pointer}.toggle-spacer{display:inline-block}.section-body{display:flex;flex-direction:column;gap:.85rem}.diff-table{width:100%;border-collapse:collapse;table-layout:fixed}.diff-table th{position:sticky;top:3rem;z-index:5;background:#eaf1f7;color:#23384f;text-align:left;font-weight:600;padding:.75rem;border-bottom:1px solid #cbd8e6}.diff-table th:first-child{width:18%}.diff-table td{padding:.75rem;border-bottom:1px solid #d9e1ea;vertical-align:top}.property-name{background:#fff;color:#0b223f;font-weight:600}.side-note{color:#d00000;font-size:.86rem;font-weight:700;white-space:nowrap}.left-value{background:#ffd6d6;color:#b00020}.right-value{background:#c9f7d8;color:#005c2f}.left-head{background:#eef3f8}.right-head{background:#eef3f8}.line-number{display:inline-block;margin-bottom:.35rem;padding:.1rem .4rem;border-radius:4px;background:rgba(255,255,255,.72);color:#334155;font-family:Cascadia Mono,Consolas,monospace;font-size:.78rem;font-weight:700}.hide-line-numbers .line-number{display:none}.diff-table pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Cascadia Mono,Consolas,monospace}.is-hidden-by-filter{display:none}@media(max-width:720px){.diff-section{margin-left:0;padding:.75rem}.diff-table{table-layout:auto}.diff-table th{top:4.25rem}.diff-table th:first-child{width:auto}.toolbar .btn{margin-top:.5rem}}";
 
-        private const string ReportJs = "(()=>{const filters=document.querySelectorAll(\".diff-filter\");const nodes=[...document.querySelectorAll(\".diff-section,tr[data-side]\")];function applyFilters(){const showLeft=document.querySelector(\"[data-filter='left-only']\").checked;const showRight=document.querySelector(\"[data-filter='right-only']\").checked;for(const node of nodes){const side=node.dataset.side;node.classList.toggle(\"is-hidden-by-filter\",(side===\"left-only\"&&!showLeft)||(side===\"right-only\"&&!showRight));}}for(const filter of filters)filter.addEventListener(\"change\",applyFilters);document.addEventListener(\"click\",event=>{const action=event.target.closest(\"[data-action]\")?.dataset.action;if(!action)return;const show=action===\"expand\";for(const collapse of document.querySelectorAll(\".collapse\"))collapse.classList.toggle(\"show\",show);for(const toggle of document.querySelectorAll(\".toggle\")){toggle.setAttribute(\"aria-expanded\",show);toggle.textContent=show?\"-\":\"+\";}});applyFilters();})();";
+        private const string ReportJs = "(()=>{const filters=document.querySelectorAll(\".diff-filter\");const nodes=[...document.querySelectorAll(\".diff-section,tr[data-side]\")];const lineToggle=document.querySelector(\"[data-action='line-numbers']\");function applyFilters(){const showLeft=document.querySelector(\"[data-filter='left-only']\").checked;const showRight=document.querySelector(\"[data-filter='right-only']\").checked;for(const node of nodes){const side=node.dataset.side;node.classList.toggle(\"is-hidden-by-filter\",(side===\"left-only\"&&!showLeft)||(side===\"right-only\"&&!showRight));}}function applyLineNumbers(){document.body.classList.toggle(\"hide-line-numbers\",lineToggle&&!lineToggle.checked);}for(const filter of filters)filter.addEventListener(\"change\",applyFilters);lineToggle?.addEventListener(\"change\",applyLineNumbers);document.addEventListener(\"click\",event=>{const action=event.target.closest(\"button[data-action]\")?.dataset.action;if(!action)return;const show=action===\"expand\";for(const collapse of document.querySelectorAll(\".collapse\"))collapse.classList.toggle(\"show\",show);for(const toggle of document.querySelectorAll(\".toggle\")){toggle.setAttribute(\"aria-expanded\",show);toggle.textContent=show?\"-\":\"+\";}});applyFilters();applyLineNumbers();})();";
     }
 }

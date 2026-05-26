@@ -32,7 +32,7 @@ namespace XmlDiffTool.Services
         private static XDocument LoadDocument(string path)
         {
             using var stream = File.OpenRead(path);
-            return XDocument.Load(stream, LoadOptions.None);
+            return XDocument.Load(stream, LoadOptions.SetLineInfo);
         }
 
         private static IEnumerable<XmlDifferenceNode> CompareElements(XElement? left, XElement? right, string parentPath, CompareOptions options)
@@ -109,7 +109,9 @@ namespace XmlDiffTool.Services
                     leftValue,
                     rightValue,
                     isLeftMissing,
-                    isRightMissing));
+                    isRightMissing,
+                    isLeftMissing ? null : GetLineNumber(left.Attributes().FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration && options.NamesEqual(attribute.Name.LocalName, name))),
+                    isRightMissing ? null : GetLineNumber(right.Attributes().FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration && options.NamesEqual(attribute.Name.LocalName, name)))));
             }
         }
 
@@ -132,7 +134,9 @@ namespace XmlDiffTool.Services
                 "#value",
                 XmlDifferenceKind.Value,
                 leftValue,
-                rightValue));
+                rightValue,
+                leftLineNumber: GetLineNumber(left),
+                rightLineNumber: GetLineNumber(right)));
         }
 
         private static void AddChildDifferences(XmlDifferenceNode node, XElement left, XElement right, string path, CompareOptions options)
@@ -204,7 +208,9 @@ namespace XmlDiffTool.Services
                 isLeftMissing ? null : NormalizeText(element.Value),
                 isRightMissing ? null : NormalizeText(element.Value),
                 isLeftMissing,
-                isRightMissing);
+                isRightMissing,
+                isLeftMissing ? null : GetLineNumber(element),
+                isRightMissing ? null : GetLineNumber(element));
 
             foreach (var attribute in element.Attributes()
                          .Where(attribute => !attribute.IsNamespaceDeclaration)
@@ -217,7 +223,9 @@ namespace XmlDiffTool.Services
                     isLeftMissing ? null : attribute.Value,
                     isRightMissing ? null : attribute.Value,
                     isLeftMissing,
-                    isRightMissing));
+                    isRightMissing,
+                    isLeftMissing ? null : GetLineNumber(attribute),
+                    isRightMissing ? null : GetLineNumber(attribute)));
             }
 
             var childElements = GetComparableChildren(element);
@@ -233,7 +241,9 @@ namespace XmlDiffTool.Services
                         isLeftMissing ? null : value,
                         isRightMissing ? null : value,
                         isLeftMissing,
-                        isRightMissing));
+                        isRightMissing,
+                        isLeftMissing ? null : GetLineNumber(element),
+                        isRightMissing ? null : GetLineNumber(element)));
                 }
 
                 return node;
@@ -244,7 +254,9 @@ namespace XmlDiffTool.Services
                 element.Name.LocalName,
                 XmlDifferenceKind.Element,
                 isLeftMissing: isLeftMissing,
-                isRightMissing: isRightMissing);
+                isRightMissing: isRightMissing,
+                leftLineNumber: isLeftMissing ? null : GetLineNumber(element),
+                rightLineNumber: isRightMissing ? null : GetLineNumber(element));
 
             foreach (var attribute in element.Attributes()
                          .Where(attribute => !attribute.IsNamespaceDeclaration)
@@ -257,7 +269,9 @@ namespace XmlDiffTool.Services
                     isLeftMissing ? null : attribute.Value,
                     isRightMissing ? null : attribute.Value,
                     isLeftMissing,
-                    isRightMissing));
+                    isRightMissing,
+                    isLeftMissing ? null : GetLineNumber(attribute),
+                    isRightMissing ? null : GetLineNumber(attribute)));
             }
 
             foreach (var child in childElements.OrderBy(child => child.Name.LocalName, StringComparer.OrdinalIgnoreCase))
@@ -310,12 +324,12 @@ namespace XmlDiffTool.Services
                 return children;
             }
 
-            return TryParseEmbeddedXml(NormalizeText(element.Value), out var embeddedChildren)
+            return TryParseEmbeddedXml(NormalizeText(element.Value), GetLineNumber(element), out var embeddedChildren)
                 ? embeddedChildren
                 : children;
         }
 
-        private static bool TryParseEmbeddedXml(string value, out List<XElement> children)
+        private static bool TryParseEmbeddedXml(string value, int? parentLineNumber, out List<XElement> children)
         {
             children = new List<XElement>();
             if (string.IsNullOrWhiteSpace(value) || !value.TrimStart().StartsWith("<", StringComparison.Ordinal))
@@ -326,6 +340,7 @@ namespace XmlDiffTool.Services
             if (TryParseDocument(value, out var document) && document.Root is not null)
             {
                 children.Add(document.Root);
+                AnnotateEmbeddedLineNumbers(children, parentLineNumber);
                 return true;
             }
 
@@ -333,6 +348,7 @@ namespace XmlDiffTool.Services
                 && document.Root is not null)
             {
                 children.AddRange(document.Root.Elements());
+                AnnotateEmbeddedLineNumbers(children, parentLineNumber);
                 return children.Count > 0;
             }
 
@@ -343,7 +359,7 @@ namespace XmlDiffTool.Services
         {
             try
             {
-                document = XDocument.Parse(value, LoadOptions.None);
+                document = XDocument.Parse(value, LoadOptions.SetLineInfo);
                 return true;
             }
             catch (XmlException)
@@ -351,6 +367,53 @@ namespace XmlDiffTool.Services
                 document = new XDocument();
                 return false;
             }
+        }
+
+        private static void AnnotateEmbeddedLineNumbers(IEnumerable<XElement> elements, int? parentLineNumber)
+        {
+            foreach (var element in elements)
+            {
+                AnnotateEmbeddedLineNumber(element, parentLineNumber);
+            }
+        }
+
+        private static void AnnotateEmbeddedLineNumber(XElement element, int? parentLineNumber)
+        {
+            AnnotateEmbeddedLineNumber((XObject)element, parentLineNumber);
+
+            foreach (var attribute in element.Attributes())
+            {
+                AnnotateEmbeddedLineNumber(attribute, parentLineNumber);
+            }
+
+            foreach (var child in element.Elements())
+            {
+                AnnotateEmbeddedLineNumber(child, parentLineNumber);
+            }
+        }
+
+        private static void AnnotateEmbeddedLineNumber(XObject item, int? parentLineNumber)
+        {
+            var lineNumber = GetNativeLineNumber(item);
+            if (parentLineNumber is not null && lineNumber is not null)
+            {
+                item.AddAnnotation(new SourceLineNumber(parentLineNumber.Value + lineNumber.Value - 1));
+            }
+        }
+
+        private static int? GetLineNumber(XObject? item)
+        {
+            return item?.Annotation<SourceLineNumber>()?.LineNumber ?? GetNativeLineNumber(item);
+        }
+
+        private static int? GetNativeLineNumber(XObject? item)
+        {
+            if (item is IXmlLineInfo lineInfo && lineInfo.HasLineInfo())
+            {
+                return lineInfo.LineNumber;
+            }
+
+            return null;
         }
 
         private static string AppendPath(string parentPath, string name)
@@ -394,6 +457,16 @@ namespace XmlDiffTool.Services
             {
                 return IgnoreCase ? value.ToUpperInvariant() : value;
             }
+        }
+
+        private sealed class SourceLineNumber
+        {
+            public SourceLineNumber(int lineNumber)
+            {
+                LineNumber = lineNumber;
+            }
+
+            public int LineNumber { get; }
         }
     }
 }

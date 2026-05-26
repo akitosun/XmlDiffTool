@@ -11,7 +11,7 @@ namespace XmlDiffTool.Models
 
     public class XmlDifferenceNode
     {
-        public XmlDifferenceNode(string path, string name, XmlDifferenceKind kind, string? leftValue = null, string? rightValue = null, bool isLeftMissing = false, bool isRightMissing = false)
+        public XmlDifferenceNode(string path, string name, XmlDifferenceKind kind, string? leftValue = null, string? rightValue = null, bool isLeftMissing = false, bool isRightMissing = false, int? leftLineNumber = null, int? rightLineNumber = null)
         {
             Path = path;
             Name = name;
@@ -20,6 +20,8 @@ namespace XmlDiffTool.Models
             RightValue = rightValue;
             IsLeftMissing = isLeftMissing;
             IsRightMissing = isRightMissing;
+            LeftLineNumber = leftLineNumber;
+            RightLineNumber = rightLineNumber;
         }
 
         public string Path { get; }
@@ -35,6 +37,10 @@ namespace XmlDiffTool.Models
         public bool IsLeftMissing { get; }
 
         public bool IsRightMissing { get; }
+
+        public int? LeftLineNumber { get; }
+
+        public int? RightLineNumber { get; }
 
         public List<XmlDifferenceNode> Children { get; } = new();
 

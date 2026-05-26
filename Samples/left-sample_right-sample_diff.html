@@ -12,7 +12,7 @@
     <header class="report-header mb-3">
       <div>
         <h1>XML Diff Report</h1>
-        <div class="text-muted small">Generated 2026-05-22 17:22:17 &middot; Ignore case: Yes &middot; List order ignored</div>
+        <div class="text-muted small">Generated 2026-05-26 16:51:27 &middot; Ignore case: Yes &middot; List order ignored</div>
       </div>
     </header>
     <section class="summary-grid mb-3">
@@ -33,24 +33,28 @@
         <input class="form-check-input diff-filter" type="checkbox" id="showRightOnly" data-filter="right-only" checked>
         <label class="form-check-label" for="showRightOnly">Show right only element</label>
       </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="showLineNumbers" data-action="line-numbers" checked>
+        <label class="form-check-label" for="showLineNumbers">Show line numbers</label>
+      </div>
       <button class="btn btn-sm btn-outline-secondary" type="button" data-action="expand">Expand all</button>
       <button class="btn btn-sm btn-outline-secondary" type="button" data-action="collapse">Collapse all</button>
     </section>
     <section class="diff-list">
       <article class="diff-section changed element" data-side="changed" style="--depth:0">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-3ada8a7e61f84643a7e7736e92029cfd" aria-expanded="true" aria-controls="node-3ada8a7e61f84643a7e7736e92029cfd">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-22f84a1c14b849ae966ebde7096189d4" aria-expanded="true" aria-controls="node-22f84a1c14b849ae966ebde7096189d4">-</button>
           <h2>Order</h2>
           <span class="count-badge">8</span>
         </div>
-        <div id="node-3ada8a7e61f84643a7e7736e92029cfd" class="collapse show section-body">
+        <div id="node-22f84a1c14b849ae966ebde7096189d4" class="collapse show section-body">
       <article class="diff-section changed element" data-side="changed" style="--depth:1">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-32d1ee4ae53f4c9786a3ffa90ed04bd0" aria-expanded="true" aria-controls="node-32d1ee4ae53f4c9786a3ffa90ed04bd0">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-33c0e0fd790e4e938c969fe0704fcbe0" aria-expanded="true" aria-controls="node-33c0e0fd790e4e938c969fe0704fcbe0">-</button>
           <h2>Order/Customer</h2>
           <span class="count-badge">2</span>
         </div>
-        <div id="node-32d1ee4ae53f4c9786a3ffa90ed04bd0" class="collapse show section-body">
+        <div id="node-33c0e0fd790e4e938c969fe0704fcbe0" class="collapse show section-body">
           <table class="diff-table">
             <thead>
               <tr>
@@ -62,13 +66,13 @@
             <tbody>
               <tr class="left-only" data-side="left-only">
                 <td class="property-name">leftOnlyAttribute <span class="side-note">(left only)</span></td>
-                <td class="left-value"><pre>left-attribute-value</pre></td>
-                <td class="right-value"><pre>(missing)</pre></td>
+                <td class="left-value"><div class="line-number">Line 3</div><pre>left-attribute-value</pre></td>
+                <td class="right-value"><div class="line-number">Line -</div><pre>(missing)</pre></td>
               </tr>
               <tr class="right-only" data-side="right-only">
                 <td class="property-name">rightOnlyAttribute <span class="side-note">(right only)</span></td>
-                <td class="left-value"><pre>(missing)</pre></td>
-                <td class="right-value"><pre>right-attribute-value</pre></td>
+                <td class="left-value"><div class="line-number">Line -</div><pre>(missing)</pre></td>
+                <td class="right-value"><div class="line-number">Line 27</div><pre>right-attribute-value</pre></td>
               </tr>
             </tbody>
           </table>
@@ -76,18 +80,18 @@
       </article>
       <article class="diff-section left-only element" data-side="left-only" style="--depth:1">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-3b4b96039c324ac8893d7f94310cc329" aria-expanded="true" aria-controls="node-3b4b96039c324ac8893d7f94310cc329">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-b85be8fe745843db841d1ec3d5afda64" aria-expanded="true" aria-controls="node-b85be8fe745843db841d1ec3d5afda64">-</button>
           <h2>Order/LeftOnlyTag</h2>
           <span class="count-badge">1</span>
         </div>
-        <div id="node-3b4b96039c324ac8893d7f94310cc329" class="collapse show section-body">
+        <div id="node-b85be8fe745843db841d1ec3d5afda64" class="collapse show section-body">
       <article class="diff-section left-only element" data-side="left-only" style="--depth:2">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-aa19c403678f4deeb583155461679540" aria-expanded="true" aria-controls="node-aa19c403678f4deeb583155461679540">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-8ae110cae5254c448c8a645656137c7e" aria-expanded="true" aria-controls="node-8ae110cae5254c448c8a645656137c7e">-</button>
           <h2>Order/LeftOnlyTag/Reason</h2>
           <span class="count-badge">1</span>
         </div>
-        <div id="node-aa19c403678f4deeb583155461679540" class="collapse show section-body">
+        <div id="node-8ae110cae5254c448c8a645656137c7e" class="collapse show section-body">
           <table class="diff-table">
             <thead>
               <tr>
@@ -99,8 +103,8 @@
             <tbody>
               <tr class="left-only" data-side="left-only">
                 <td class="property-name">Value <span class="side-note">(left only)</span></td>
-                <td class="left-value"><pre>This tag exists only in left XML.</pre></td>
-                <td class="right-value"><pre>(missing)</pre></td>
+                <td class="left-value"><div class="line-number">Line 25</div><pre>This tag exists only in left XML.</pre></td>
+                <td class="right-value"><div class="line-number">Line -</div><pre>(missing)</pre></td>
               </tr>
             </tbody>
           </table>
@@ -110,18 +114,18 @@
       </article>
       <article class="diff-section right-only element" data-side="right-only" style="--depth:1">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-7d6d048eed094ff6a66edac92c1bbd37" aria-expanded="true" aria-controls="node-7d6d048eed094ff6a66edac92c1bbd37">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-54aaac5f56234fe98979204b0c48c8a6" aria-expanded="true" aria-controls="node-54aaac5f56234fe98979204b0c48c8a6">-</button>
           <h2>Order/RightOnlyTag</h2>
           <span class="count-badge">1</span>
         </div>
-        <div id="node-7d6d048eed094ff6a66edac92c1bbd37" class="collapse show section-body">
+        <div id="node-54aaac5f56234fe98979204b0c48c8a6" class="collapse show section-body">
       <article class="diff-section right-only element" data-side="right-only" style="--depth:2">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-a10b17880aa8459c8edabf97c15fafa6" aria-expanded="true" aria-controls="node-a10b17880aa8459c8edabf97c15fafa6">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-7e2c6fcf0d3f4c34994f4115ab466fb3" aria-expanded="true" aria-controls="node-7e2c6fcf0d3f4c34994f4115ab466fb3">-</button>
           <h2>Order/RightOnlyTag/Reason</h2>
           <span class="count-badge">1</span>
         </div>
-        <div id="node-a10b17880aa8459c8edabf97c15fafa6" class="collapse show section-body">
+        <div id="node-7e2c6fcf0d3f4c34994f4115ab466fb3" class="collapse show section-body">
           <table class="diff-table">
             <thead>
               <tr>
@@ -133,8 +137,8 @@
             <tbody>
               <tr class="right-only" data-side="right-only">
                 <td class="property-name">Value <span class="side-note">(right only)</span></td>
-                <td class="left-value"><pre>(missing)</pre></td>
-                <td class="right-value"><pre>This tag exists only in right XML.</pre></td>
+                <td class="left-value"><div class="line-number">Line -</div><pre>(missing)</pre></td>
+                <td class="right-value"><div class="line-number">Line 21</div><pre>This tag exists only in right XML.</pre></td>
               </tr>
             </tbody>
           </table>
@@ -144,11 +148,11 @@
       </article>
       <article class="diff-section changed element" data-side="changed" style="--depth:1">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-03cd412819344a0298583da3eb8870cf" aria-expanded="true" aria-controls="node-03cd412819344a0298583da3eb8870cf">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-f3c769d67c7f433dabba2a7769c7195e" aria-expanded="true" aria-controls="node-f3c769d67c7f433dabba2a7769c7195e">-</button>
           <h2>Order/SharedDifferentAttribute</h2>
           <span class="count-badge">2</span>
         </div>
-        <div id="node-03cd412819344a0298583da3eb8870cf" class="collapse show section-body">
+        <div id="node-f3c769d67c7f433dabba2a7769c7195e" class="collapse show section-body">
           <table class="diff-table">
             <thead>
               <tr>
@@ -160,13 +164,13 @@
             <tbody>
               <tr class="left-only" data-side="left-only">
                 <td class="property-name">leftFlag <span class="side-note">(left only)</span></td>
-                <td class="left-value"><pre>enabled</pre></td>
-                <td class="right-value"><pre>(missing)</pre></td>
+                <td class="left-value"><div class="line-number">Line 27</div><pre>enabled</pre></td>
+                <td class="right-value"><div class="line-number">Line -</div><pre>(missing)</pre></td>
               </tr>
               <tr class="right-only" data-side="right-only">
                 <td class="property-name">rightFlag <span class="side-note">(right only)</span></td>
-                <td class="left-value"><pre>(missing)</pre></td>
-                <td class="right-value"><pre>enabled</pre></td>
+                <td class="left-value"><div class="line-number">Line -</div><pre>(missing)</pre></td>
+                <td class="right-value"><div class="line-number">Line 23</div><pre>enabled</pre></td>
               </tr>
             </tbody>
           </table>
@@ -174,11 +178,11 @@
       </article>
       <article class="diff-section changed element" data-side="changed" style="--depth:1">
         <div class="section-heading">
-          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-ad277a650d7b41dca408eea3b5a0f287" aria-expanded="true" aria-controls="node-ad277a650d7b41dca408eea3b5a0f287">-</button>
+          <button class="toggle" type="button" data-bs-toggle="collapse" data-bs-target="#node-63be3412263c45bfb016523f78693566" aria-expanded="true" aria-controls="node-63be3412263c45bfb016523f78693566">-</button>
           <h2>Order/Shipping</h2>
           <span class="count-badge">2</span>
         </div>
-        <div id="node-ad277a650d7b41dca408eea3b5a0f287" class="collapse show section-body">
+        <div id="node-63be3412263c45bfb016523f78693566" class="collapse show section-body">
           <table class="diff-table">
             <thead>
               <tr>
@@ -190,13 +194,13 @@
             <tbody>
               <tr class="changed" data-side="changed">
                 <td class="property-name">carrier</td>
-                <td class="left-value"><pre>DHL</pre></td>
-                <td class="right-value"><pre>FedEx</pre></td>
+                <td class="left-value"><div class="line-number">Line 21</div><pre>DHL</pre></td>
+                <td class="right-value"><div class="line-number">Line 17</div><pre>FedEx</pre></td>
               </tr>
               <tr class="changed" data-side="changed">
                 <td class="property-name">method</td>
-                <td class="left-value"><pre>Air</pre></td>
-                <td class="right-value"><pre>Ground</pre></td>
+                <td class="left-value"><div class="line-number">Line 21</div><pre>Air</pre></td>
+                <td class="right-value"><div class="line-number">Line 17</div><pre>Ground</pre></td>
               </tr>
             </tbody>
           </table>

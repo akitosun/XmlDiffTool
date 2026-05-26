@@ -28,7 +28,9 @@ namespace XmlDiffTool.Models
                         node.LeftValue,
                         node.RightValue,
                         node.IsLeftMissing,
-                        node.IsRightMissing);
+                        node.IsRightMissing,
+                        node.LeftLineNumber,
+                        node.RightLineNumber);
                 }
 
                 foreach (var child in Flatten(node.Children))
