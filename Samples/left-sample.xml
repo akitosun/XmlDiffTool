@@ -28,7 +28,9 @@
     <Value>Same element, different attributes.</Value>
   </SharedDifferentAttribute>
   <DetectionSettings>
-    <DetectionSetting id="0">(MAIN@Default:ImageEnlarger=0;RawImageSaving=false;RecorderSaving=true;SaveByTestID=false;Denoise=false;(CH1@CH:ChannelWeight_1=1;ChannelWeight_2=0;Threshold=50;LeftOnlyParam=enabled;))</DetectionSetting>
+    <DetectionSetting id="0" DetectionOption="23" Merge="32">
+      <DBIParam Id="0" Name="Default" Content="(MAIN@Default:ImageEnlarger=0;RawImageSaving=false;RecorderSaving=true;SaveByTestID=false;Denoise=false;(CH1@CH:ChannelWeight_1=1;ChannelWeight_2=0;Threshold=50;LeftOnlyParam=enabled;)(Random@Random:PreFilter1=0;BGBalance1=0;Sensitivity1=0;)(Array@Array:PreFilter2=5 25 1 1;ThresholdUp2=4;AdaptiveRate2=0;))" />
+    </DetectionSetting>
   </DetectionSettings>
   <CaseOnlyValue>HELLO WORLD</CaseOnlyValue>
 </Order>

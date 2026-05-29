@@ -104,6 +104,20 @@ namespace XmlDiffTool.Services
                     continue;
                 }
 
+                var leftAttribute = isLeftMissing ? null : left.Attributes().FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration && options.NamesEqual(attribute.Name.LocalName, name));
+                var rightAttribute = isRightMissing ? null : right.Attributes().FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration && options.NamesEqual(attribute.Name.LocalName, name));
+                if (!isLeftMissing
+                    && !isRightMissing
+                    && TryCreateDelimitedAttributeDifference(name, leftValue!, rightValue!, path, GetLineNumber(leftAttribute), GetLineNumber(rightAttribute), options, out var parameterNode))
+                {
+                    if (parameterNode.HasChildren)
+                    {
+                        node.Children.Add(parameterNode);
+                    }
+
+                    continue;
+                }
+
                 node.Children.Add(new XmlDifferenceNode(
                     $"{path}[@{name}]",
                     $"@{name}",
@@ -112,8 +126,8 @@ namespace XmlDiffTool.Services
                     rightValue,
                     isLeftMissing,
                     isRightMissing,
-                    isLeftMissing ? null : GetLineNumber(left.Attributes().FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration && options.NamesEqual(attribute.Name.LocalName, name))),
-                    isRightMissing ? null : GetLineNumber(right.Attributes().FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration && options.NamesEqual(attribute.Name.LocalName, name)))));
+                    GetLineNumber(leftAttribute),
+                    GetLineNumber(rightAttribute)));
             }
         }
 
@@ -148,6 +162,21 @@ namespace XmlDiffTool.Services
 
         private static bool TryAddDelimitedParameterDifferences(XmlDifferenceNode node, string leftValue, string rightValue, string path, int? leftLineNumber, int? rightLineNumber, CompareOptions options)
         {
+            if (!TryParseDelimitedParameterTree(leftValue, options, out var leftGroup)
+                || !TryParseDelimitedParameterTree(rightValue, options, out var rightGroup))
+            {
+                return false;
+            }
+
+            AddDelimitedGroupDifferences(node, leftGroup, rightGroup, path, leftLineNumber, rightLineNumber, options);
+            return true;
+        }
+
+        private static bool TryCreateDelimitedAttributeDifference(string attributeName, string leftValue, string rightValue, string parentPath, int? leftLineNumber, int? rightLineNumber, CompareOptions options, out XmlDifferenceNode node)
+        {
+            var path = $"{parentPath}[@{attributeName}]";
+            node = new XmlDifferenceNode(path, $"@{attributeName}", XmlDifferenceKind.Attribute, leftLineNumber: leftLineNumber, rightLineNumber: rightLineNumber);
+
             if (!TryParseDelimitedParameterTree(leftValue, options, out var leftGroup)
                 || !TryParseDelimitedParameterTree(rightValue, options, out var rightGroup))
             {
@@ -285,7 +314,7 @@ namespace XmlDiffTool.Services
                 {
                     if (!TryParseDelimitedGroup(value, ref index, root, options, ref parsedCount))
                     {
-                        return false;
+                        index++;
                     }
 
                     continue;
@@ -307,6 +336,7 @@ namespace XmlDiffTool.Services
         {
             index++;
             var nameStart = index;
+            var startParsedCount = parsedCount;
             while (index < value.Length && value[index] != ':' && value[index] != ')')
             {
                 index++;
@@ -345,7 +375,7 @@ namespace XmlDiffTool.Services
                 {
                     if (!TryParseDelimitedGroup(value, ref index, group, options, ref parsedCount))
                     {
-                        return false;
+                        index++;
                     }
 
                     continue;
@@ -360,7 +390,7 @@ namespace XmlDiffTool.Services
                 index++;
             }
 
-            return false;
+            return parsedCount > startParsedCount;
         }
 
         private static bool TryParseDelimitedParameter(string value, ref int index, DelimitedParameterGroup group, CompareOptions options)
