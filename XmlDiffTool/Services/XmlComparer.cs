@@ -11,6 +11,8 @@ namespace XmlDiffTool.Services
 {
     public class XmlComparer
     {
+        private const string IdentityAttributeName = "Id";
+
         public XmlComparisonResult Compare(string leftPath, string rightPath, bool ignoreCase, IProgress<int>? progress = null)
         {
             progress?.Report(0);
@@ -64,7 +66,7 @@ namespace XmlDiffTool.Services
             }
 
             var path = AppendPath(parentPath, leftName);
-            var node = new XmlDifferenceNode(path, leftName, XmlDifferenceKind.Element);
+            var node = new XmlDifferenceNode(path, leftName, XmlDifferenceKind.Element, idValue: GetIdValue(left));
 
             AddAttributeDifferences(node, left, right, path, options);
             AddValueDifference(node, left, right, path, options);
@@ -156,6 +158,7 @@ namespace XmlDiffTool.Services
                 var leftGroup = leftChildren.Where(child => options.NamesEqual(child.Name.LocalName, childName)).ToList();
                 var rightGroup = rightChildren.Where(child => options.NamesEqual(child.Name.LocalName, childName)).ToList();
                 RemoveExactMatches(leftGroup, rightGroup, options);
+                AddIdMatchedChildDifferences(node, leftGroup, rightGroup, path, options);
 
                 leftGroup.Sort((first, second) => string.Compare(BuildSignature(first, options), BuildSignature(second, options), StringComparison.Ordinal));
                 rightGroup.Sort((first, second) => string.Compare(BuildSignature(first, options), BuildSignature(second, options), StringComparison.Ordinal));
@@ -176,6 +179,85 @@ namespace XmlDiffTool.Services
                     node.Children.Add(CreateMissingElementNode(rightGroup[index], path, isLeftMissing: true));
                 }
             }
+        }
+
+        private static void AddIdMatchedChildDifferences(XmlDifferenceNode node, List<XElement> leftGroup, List<XElement> rightGroup, string path, CompareOptions options)
+        {
+            var leftById = BuildIdLookup(leftGroup, options);
+            var rightById = BuildIdLookup(rightGroup, options);
+            if (leftById.Count == 0 && rightById.Count == 0)
+            {
+                return;
+            }
+
+            var idKeys = new HashSet<string>(leftById.Keys, StringComparer.Ordinal);
+            idKeys.UnionWith(rightById.Keys);
+
+            foreach (var idKey in idKeys.OrderBy(key => key, StringComparer.Ordinal))
+            {
+                leftById.TryGetValue(idKey, out var leftMatches);
+                rightById.TryGetValue(idKey, out var rightMatches);
+
+                var pairedCount = Math.Min(leftMatches?.Count ?? 0, rightMatches?.Count ?? 0);
+                for (var index = 0; index < pairedCount; index++)
+                {
+                    var left = leftMatches![index];
+                    var right = rightMatches![index];
+                    node.Children.AddRange(CompareElements(left, right, path, options));
+                    leftGroup.Remove(left);
+                    rightGroup.Remove(right);
+                }
+
+                if (leftMatches is not null)
+                {
+                    for (var index = pairedCount; index < leftMatches.Count; index++)
+                    {
+                        var left = leftMatches[index];
+                        node.Children.Add(CreateMissingElementNode(left, path, isRightMissing: true));
+                        leftGroup.Remove(left);
+                    }
+                }
+
+                if (rightMatches is not null)
+                {
+                    for (var index = pairedCount; index < rightMatches.Count; index++)
+                    {
+                        var right = rightMatches[index];
+                        node.Children.Add(CreateMissingElementNode(right, path, isLeftMissing: true));
+                        rightGroup.Remove(right);
+                    }
+                }
+            }
+        }
+
+        private static Dictionary<string, List<XElement>> BuildIdLookup(IEnumerable<XElement> elements, CompareOptions options)
+        {
+            var lookup = new Dictionary<string, List<XElement>>(StringComparer.Ordinal);
+            foreach (var element in elements)
+            {
+                var idKey = GetIdKey(element, options);
+                if (idKey is null)
+                {
+                    continue;
+                }
+
+                if (!lookup.TryGetValue(idKey, out var matches))
+                {
+                    matches = new List<XElement>();
+                    lookup.Add(idKey, matches);
+                }
+
+                matches.Add(element);
+            }
+
+            return lookup;
+        }
+
+        private static string? GetIdKey(XElement element, CompareOptions options)
+        {
+            var idAttribute = GetIdAttribute(element);
+
+            return idAttribute is null ? null : options.NormalizeValue(idAttribute.Value);
         }
 
         private static void RemoveExactMatches(List<XElement> leftGroup, List<XElement> rightGroup, CompareOptions options)
@@ -210,7 +292,8 @@ namespace XmlDiffTool.Services
                 isLeftMissing,
                 isRightMissing,
                 isLeftMissing ? null : GetLineNumber(element),
-                isRightMissing ? null : GetLineNumber(element));
+                isRightMissing ? null : GetLineNumber(element),
+                GetIdValue(element));
 
             foreach (var attribute in element.Attributes()
                          .Where(attribute => !attribute.IsNamespaceDeclaration)
@@ -256,7 +339,8 @@ namespace XmlDiffTool.Services
                 isLeftMissing: isLeftMissing,
                 isRightMissing: isRightMissing,
                 leftLineNumber: isLeftMissing ? null : GetLineNumber(element),
-                rightLineNumber: isRightMissing ? null : GetLineNumber(element));
+                rightLineNumber: isRightMissing ? null : GetLineNumber(element),
+                idValue: GetIdValue(element));
 
             foreach (var attribute in element.Attributes()
                          .Where(attribute => !attribute.IsNamespaceDeclaration)
@@ -419,6 +503,18 @@ namespace XmlDiffTool.Services
         private static string AppendPath(string parentPath, string name)
         {
             return string.IsNullOrWhiteSpace(parentPath) ? name : $"{parentPath}/{name}";
+        }
+
+        private static XAttribute? GetIdAttribute(XElement element)
+        {
+            return element.Attributes()
+                .FirstOrDefault(attribute => !attribute.IsNamespaceDeclaration
+                                             && string.Equals(attribute.Name.LocalName, IdentityAttributeName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string? GetIdValue(XElement element)
+        {
+            return GetIdAttribute(element)?.Value;
         }
 
         private static string NormalizeText(string value)

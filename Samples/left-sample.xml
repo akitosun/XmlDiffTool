@@ -5,15 +5,15 @@
     <Email>Support@Example.com</Email>
   </Customer>
   <Items>
-    <Item sku="A-100" quantity="2">
+    <Item id="1" sku="A-100" quantity="2">
       <Name>Keyboard</Name>
       <Price currency="USD">120</Price>
     </Item>
-    <Item sku="B-200" quantity="1">
+    <Item id="2" sku="B-201" quantity="1">
       <Name>Mouse</Name>
       <Price currency="USD">45</Price>
     </Item>
-    <Item sku="C-300" quantity="4">
+    <Item id="3" sku="C-300" quantity="4">
       <Name>Cable</Name>
       <Price currency="USD">8</Price>
     </Item>
