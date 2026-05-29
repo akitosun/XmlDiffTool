@@ -33,6 +33,9 @@
     <sharedDifferentAttribute rightFlag="enabled">
         <value>Same element, different attributes.</value>
     </sharedDifferentAttribute>
+    <DetectionSettings>
+        <DetectionSetting id="0">(MAIN@Default:ImageEnlarger=0;RawImageSaving=true;RecorderSaving=true;SaveByTestID=true;Denoise=false;(CH1@CH:ChannelWeight_1=1;ChannelWeight_2=2;Threshold=50;RightOnlyParam=enabled;))</DetectionSetting>
+    </DetectionSettings>
     <caseOnlyValue>hello world</caseOnlyValue>
     <customer customerId="c001"
               tier="gold"

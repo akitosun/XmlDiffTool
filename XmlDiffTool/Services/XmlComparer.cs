@@ -131,6 +131,11 @@ namespace XmlDiffTool.Services
                 return;
             }
 
+            if (TryAddDelimitedParameterDifferences(node, leftValue, rightValue, path, GetLineNumber(left), GetLineNumber(right), options))
+            {
+                return;
+            }
+
             node.Children.Add(new XmlDifferenceNode(
                 $"{path}[#value]",
                 "#value",
@@ -139,6 +144,276 @@ namespace XmlDiffTool.Services
                 rightValue,
                 leftLineNumber: GetLineNumber(left),
                 rightLineNumber: GetLineNumber(right)));
+        }
+
+        private static bool TryAddDelimitedParameterDifferences(XmlDifferenceNode node, string leftValue, string rightValue, string path, int? leftLineNumber, int? rightLineNumber, CompareOptions options)
+        {
+            if (!TryParseDelimitedParameterTree(leftValue, options, out var leftGroup)
+                || !TryParseDelimitedParameterTree(rightValue, options, out var rightGroup))
+            {
+                return false;
+            }
+
+            AddDelimitedGroupDifferences(node, leftGroup, rightGroup, path, leftLineNumber, rightLineNumber, options);
+            return true;
+        }
+
+        private static void AddDelimitedGroupDifferences(XmlDifferenceNode node, DelimitedParameterGroup leftGroup, DelimitedParameterGroup rightGroup, string path, int? leftLineNumber, int? rightLineNumber, CompareOptions options)
+        {
+            AddDelimitedParameterRows(node, leftGroup.Parameters, rightGroup.Parameters, path, leftLineNumber, rightLineNumber, options);
+
+            var groupNames = new HashSet<string>(leftGroup.Groups.Keys, options.NameComparer);
+            groupNames.UnionWith(rightGroup.Groups.Keys);
+
+            foreach (var groupName in groupNames.OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+            {
+                leftGroup.Groups.TryGetValue(groupName, out var leftChildGroup);
+                rightGroup.Groups.TryGetValue(groupName, out var rightChildGroup);
+
+                var displayName = leftChildGroup?.Name ?? rightChildGroup!.Name;
+                var groupNode = new XmlDifferenceNode(
+                    AppendPath(path, displayName),
+                    displayName,
+                    XmlDifferenceKind.Element,
+                    isLeftMissing: leftChildGroup is null,
+                    isRightMissing: rightChildGroup is null,
+                    leftLineNumber: leftChildGroup is null ? null : leftLineNumber,
+                    rightLineNumber: rightChildGroup is null ? null : rightLineNumber);
+
+                if (leftChildGroup is null)
+                {
+                    AddMissingDelimitedGroupRows(groupNode, rightChildGroup!, groupNode.Path, isLeftMissing: true, lineNumber: rightLineNumber);
+                }
+                else if (rightChildGroup is null)
+                {
+                    AddMissingDelimitedGroupRows(groupNode, leftChildGroup, groupNode.Path, isRightMissing: true, lineNumber: leftLineNumber);
+                }
+                else
+                {
+                    AddDelimitedGroupDifferences(groupNode, leftChildGroup, rightChildGroup, groupNode.Path, leftLineNumber, rightLineNumber, options);
+                }
+
+                if (groupNode.HasChildren)
+                {
+                    node.Children.Add(groupNode);
+                }
+            }
+        }
+
+        private static void AddDelimitedParameterRows(XmlDifferenceNode node, Dictionary<string, DelimitedParameter> leftParameters, Dictionary<string, DelimitedParameter> rightParameters, string path, int? leftLineNumber, int? rightLineNumber, CompareOptions options)
+        {
+            var names = new HashSet<string>(leftParameters.Keys, options.NameComparer);
+            names.UnionWith(rightParameters.Keys);
+
+            foreach (var name in names.OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+            {
+                leftParameters.TryGetValue(name, out var leftParameter);
+                rightParameters.TryGetValue(name, out var rightParameter);
+
+                var isLeftMissing = leftParameter is null;
+                var isRightMissing = rightParameter is null;
+                if (!isLeftMissing && !isRightMissing && options.ValuesEqual(leftParameter!.Value, rightParameter!.Value))
+                {
+                    continue;
+                }
+
+                AddDelimitedParameterRow(node, path, leftParameter, rightParameter, isLeftMissing, isRightMissing, leftLineNumber, rightLineNumber);
+            }
+        }
+
+        private static void AddDelimitedParameterRow(XmlDifferenceNode node, string path, DelimitedParameter? leftParameter, DelimitedParameter? rightParameter, bool isLeftMissing, bool isRightMissing, int? leftLineNumber, int? rightLineNumber)
+        {
+            var displayName = leftParameter?.Name ?? rightParameter!.Name;
+            node.Children.Add(new XmlDifferenceNode(
+                $"{path}[#{displayName}]",
+                displayName,
+                XmlDifferenceKind.Value,
+                leftParameter?.Value,
+                rightParameter?.Value,
+                isLeftMissing,
+                isRightMissing,
+                isLeftMissing ? null : leftLineNumber,
+                isRightMissing ? null : rightLineNumber));
+        }
+
+        private static void AddMissingDelimitedGroupRows(XmlDifferenceNode node, DelimitedParameterGroup group, string path, bool isLeftMissing = false, bool isRightMissing = false, int? lineNumber = null)
+        {
+            foreach (var parameter in group.Parameters.Values.OrderBy(parameter => parameter.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                AddDelimitedParameterRow(
+                    node,
+                    path,
+                    isRightMissing ? parameter : null,
+                    isLeftMissing ? parameter : null,
+                    isLeftMissing,
+                    isRightMissing,
+                    isRightMissing ? lineNumber : null,
+                    isLeftMissing ? lineNumber : null);
+            }
+
+            foreach (var childGroup in group.Groups.Values.OrderBy(group => group.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var childNode = new XmlDifferenceNode(
+                    AppendPath(path, childGroup.Name),
+                    childGroup.Name,
+                    XmlDifferenceKind.Element,
+                    isLeftMissing: isLeftMissing,
+                    isRightMissing: isRightMissing,
+                    leftLineNumber: isRightMissing ? lineNumber : null,
+                    rightLineNumber: isLeftMissing ? lineNumber : null);
+
+                AddMissingDelimitedGroupRows(childNode, childGroup, childNode.Path, isLeftMissing, isRightMissing, lineNumber);
+                node.Children.Add(childNode);
+            }
+        }
+
+        private static bool TryParseDelimitedParameterTree(string value, CompareOptions options, out DelimitedParameterGroup root)
+        {
+            root = new DelimitedParameterGroup(string.Empty, options.NameComparer);
+            if (string.IsNullOrWhiteSpace(value) || !value.Contains(';') || !value.Contains('='))
+            {
+                return false;
+            }
+
+            var index = 0;
+            var parsedCount = 0;
+            while (index < value.Length)
+            {
+                SkipParameterSeparators(value, ref index);
+
+                if (index < value.Length && value[index] == '(')
+                {
+                    if (!TryParseDelimitedGroup(value, ref index, root, options, ref parsedCount))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (TryParseDelimitedParameter(value, ref index, root, options))
+                {
+                    parsedCount++;
+                    continue;
+                }
+
+                index++;
+            }
+
+            return parsedCount >= 2;
+        }
+
+        private static bool TryParseDelimitedGroup(string value, ref int index, DelimitedParameterGroup parent, CompareOptions options, ref int parsedCount)
+        {
+            index++;
+            var nameStart = index;
+            while (index < value.Length && value[index] != ':' && value[index] != ')')
+            {
+                index++;
+            }
+
+            if (index >= value.Length || value[index] != ':')
+            {
+                return false;
+            }
+
+            var groupName = value[nameStart..index].Trim();
+            if (string.IsNullOrWhiteSpace(groupName))
+            {
+                return false;
+            }
+
+            index++;
+            var group = new DelimitedParameterGroup(GetUniqueName(parent.Groups, groupName), options.NameComparer);
+            parent.Groups.Add(group.Name, group);
+
+            while (index < value.Length)
+            {
+                SkipParameterSeparators(value, ref index);
+                if (index >= value.Length)
+                {
+                    break;
+                }
+
+                if (value[index] == ')')
+                {
+                    index++;
+                    return true;
+                }
+
+                if (value[index] == '(')
+                {
+                    if (!TryParseDelimitedGroup(value, ref index, group, options, ref parsedCount))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (TryParseDelimitedParameter(value, ref index, group, options))
+                {
+                    parsedCount++;
+                    continue;
+                }
+
+                index++;
+            }
+
+            return false;
+        }
+
+        private static bool TryParseDelimitedParameter(string value, ref int index, DelimitedParameterGroup group, CompareOptions options)
+        {
+            var nameStart = index;
+            while (index < value.Length && value[index] != '=' && value[index] != ';' && value[index] != ')' && value[index] != '(')
+            {
+                index++;
+            }
+
+            if (index >= value.Length || value[index] != '=')
+            {
+                return false;
+            }
+
+            var name = value[nameStart..index].Trim();
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
+
+            index++;
+            var valueStart = index;
+            while (index < value.Length && value[index] != ';' && value[index] != ')' && value[index] != '(')
+            {
+                index++;
+            }
+
+            var parameterValue = value[valueStart..index].Trim();
+            var uniqueName = GetUniqueName(group.Parameters, name);
+            group.Parameters.Add(uniqueName, new DelimitedParameter(uniqueName, parameterValue));
+            return true;
+        }
+
+        private static void SkipParameterSeparators(string value, ref int index)
+        {
+            while (index < value.Length && (char.IsWhiteSpace(value[index]) || value[index] == ';'))
+            {
+                index++;
+            }
+        }
+
+        private static string GetUniqueName<TValue>(Dictionary<string, TValue> values, string name)
+        {
+            var uniqueName = name;
+            var duplicateIndex = 2;
+            while (values.ContainsKey(uniqueName))
+            {
+                uniqueName = $"{name}[{duplicateIndex}]";
+                duplicateIndex++;
+            }
+
+            return uniqueName;
         }
 
         private static void AddChildDifferences(XmlDifferenceNode node, XElement left, XElement right, string path, CompareOptions options)
@@ -563,6 +838,35 @@ namespace XmlDiffTool.Services
             }
 
             public int LineNumber { get; }
+        }
+
+        private sealed class DelimitedParameter
+        {
+            public DelimitedParameter(string name, string value)
+            {
+                Name = name;
+                Value = value;
+            }
+
+            public string Name { get; }
+
+            public string Value { get; }
+        }
+
+        private sealed class DelimitedParameterGroup
+        {
+            public DelimitedParameterGroup(string name, StringComparer comparer)
+            {
+                Name = name;
+                Parameters = new Dictionary<string, DelimitedParameter>(comparer);
+                Groups = new Dictionary<string, DelimitedParameterGroup>(comparer);
+            }
+
+            public string Name { get; }
+
+            public Dictionary<string, DelimitedParameter> Parameters { get; }
+
+            public Dictionary<string, DelimitedParameterGroup> Groups { get; }
         }
     }
 }

@@ -209,7 +209,7 @@ namespace XmlDiffTool.Services
 
             if (row.Kind == XmlDifferenceKind.Value)
             {
-                return "Value";
+                return row.Name == "#value" ? "Value" : row.Name;
             }
 
             if (row.Path.StartsWith(owner.Path + "/", StringComparison.Ordinal))
